@@ -103,22 +103,11 @@
     .brand-mark {
       width: 42px;
       height: 42px;
-      border-radius: 50%;
-      background: conic-gradient(from 120deg, #2f7d78, #8eb9b5, #e7c98f, #cf5f42, #2f7d78);
-      box-shadow: inset 0 0 0 6px rgba(255, 255, 255, .7);
-      position: relative;
+      border-radius: 11px;
+      object-fit: cover;
+      background: #f4eee6;
+      box-shadow: 0 1px 2px rgba(44, 38, 30, .12);
       flex: 0 0 auto;
-    }
-
-    .brand-mark::after {
-      content: "";
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      left: 12px;
-      top: 12px;
-      border: 3px solid #fff;
-      border-radius: 50%;
     }
 
     .brand h1 {
@@ -212,6 +201,42 @@
     }
 
     .tool.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px rgba(47, 125, 120, .24);
+    }
+
+    .preset-tools {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .preset-tool {
+      display: grid;
+      place-items: center;
+      min-height: 56px;
+      padding: 6px;
+      gap: 4px;
+    }
+
+    .preset-tool svg {
+      width: 28px;
+      height: 28px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .preset-tool span {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .preset-tool.active {
       border-color: var(--accent);
       background: var(--accent-soft);
       box-shadow: inset 0 0 0 1px rgba(47, 125, 120, .24);
@@ -439,7 +464,7 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true"></div>
+        <img class="brand-mark" src="assets/icon.png" alt="钩针图案绘制器图标">
         <div>
           <h1>钩针图案绘制器</h1>
           <p>符号图、配色、图例一屏完成</p>
@@ -472,6 +497,20 @@
       <section class="section">
         <div class="section-title">针法</div>
         <div class="tools" id="toolPalette"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Shape</div>
+        <div class="preset-tools" id="presetPalette"></div>
+        <div style="height:10px"></div>
+        <div class="field-grid">
+          <label>W
+            <input id="presetColsInput" type="number" min="1" max="21" value="7">
+          </label>
+          <label>H
+            <input id="presetRowsInput" type="number" min="1" max="21" value="7">
+          </label>
+        </div>
       </section>
 
       <section class="section">
@@ -549,6 +588,32 @@
       </section>
 
       <section class="section">
+        <div class="section-title">Reference</div>
+        <div class="actions two">
+          <button id="uploadBgBtn">Upload image</button>
+          <button id="clearBgBtn">Clear</button>
+        </div>
+        <input id="bgFileInput" class="hidden-file" type="file" accept="image/*">
+        <div style="height:10px"></div>
+        <div class="field-grid">
+          <label>Opacity
+            <input id="bgOpacityInput" type="number" min="0" max="100" value="35">
+          </label>
+          <label>Scale
+            <input id="bgScaleInput" type="number" min="10" max="300" value="100">
+          </label>
+          <label>Offset X
+            <input id="bgOffsetXInput" type="number" min="-2000" max="2000" value="0">
+          </label>
+          <label>Offset Y
+            <input id="bgOffsetYInput" type="number" min="-2000" max="2000" value="0">
+          </label>
+        </div>
+        <div style="height:8px"></div>
+        <p class="note" id="bgInfoText">No reference image loaded.</p>
+      </section>
+
+      <section class="section">
         <div class="section-title">快速操作</div>
         <div class="actions two">
           <button id="fillRowBtn">填满当前行</button>
@@ -579,6 +644,13 @@
       { id: "erase", name: "橡皮", abbr: "擦", draw: "eraser" }
     ];
 
+    const shapePresets = [
+      { id: "single", name: "Single" },
+      { id: "rect", name: "Rect" },
+      { id: "circle", name: "Circle" },
+      { id: "star", name: "Star" }
+    ];
+
     const swatchColors = ["#24221f", "#2f7d78", "#cf5f42", "#8f5b9a", "#d69b2d", "#5c7f45", "#4d76b9", "#b34d66", "#8b6b4f", "#6d6860", "#ffffff", "#f1d7c3"];
     const state = {
       rows: 18,
@@ -587,6 +659,9 @@
       gutter: 42,
       zoom: 1,
       tool: "sc",
+      preset: "single",
+      presetCols: 7,
+      presetRows: 7,
       color: "#2f7d78",
       title: "我的钩针图案",
       numberMode: "both",
@@ -599,7 +674,18 @@
       panMode: false,
       isPanning: false,
       spacePanning: false,
-      panStart: null
+      panStart: null,
+      background: {
+        src: "",
+        name: "",
+        opacity: 35,
+        scale: 100,
+        offsetX: 0,
+        offsetY: 0,
+        naturalWidth: 0,
+        naturalHeight: 0,
+        image: null
+      }
     };
 
     const els = {
@@ -612,13 +698,22 @@
       cellInput: document.getElementById("cellInput"),
       numberMode: document.getElementById("numberMode"),
       toolPalette: document.getElementById("toolPalette"),
+      presetPalette: document.getElementById("presetPalette"),
+      presetColsInput: document.getElementById("presetColsInput"),
+      presetRowsInput: document.getElementById("presetRowsInput"),
       swatches: document.getElementById("swatches"),
       customColor: document.getElementById("customColor"),
       legend: document.getElementById("legend"),
       summaryText: document.getElementById("summaryText"),
       zoomLabel: document.getElementById("zoomLabel"),
       titleInput: document.getElementById("titleInput"),
-      fileInput: document.getElementById("fileInput")
+      fileInput: document.getElementById("fileInput"),
+      bgFileInput: document.getElementById("bgFileInput"),
+      bgOpacityInput: document.getElementById("bgOpacityInput"),
+      bgScaleInput: document.getElementById("bgScaleInput"),
+      bgOffsetXInput: document.getElementById("bgOffsetXInput"),
+      bgOffsetYInput: document.getElementById("bgOffsetYInput"),
+      bgInfoText: document.getElementById("bgInfoText")
     };
 
     const ctx = els.canvas.getContext("2d");
@@ -647,6 +742,7 @@
         seedSample();
       }
       buildTools();
+      buildPresets();
       buildSwatches();
       bindEvents();
       updateInputs();
@@ -682,6 +778,24 @@
           buildTools();
         });
         els.toolPalette.appendChild(btn);
+      });
+    }
+
+    function buildPresets() {
+      els.presetPalette.innerHTML = "";
+      shapePresets.forEach(preset => {
+        const btn = document.createElement("button");
+        btn.className = `preset-tool${state.preset === preset.id ? " active" : ""}`;
+        btn.type = "button";
+        btn.title = preset.name;
+        btn.dataset.preset = preset.id;
+        btn.innerHTML = `${shapeSvg(preset.id)}<span>${preset.name}</span>`;
+        btn.addEventListener("click", () => {
+          state.preset = preset.id;
+          buildPresets();
+          render();
+        });
+        els.presetPalette.appendChild(btn);
       });
     }
 
@@ -750,13 +864,34 @@
       document.getElementById("exportSvgBtn").addEventListener("click", exportSvg);
       document.getElementById("exportJsonBtn").addEventListener("click", exportJson);
       document.getElementById("importJsonBtn").addEventListener("click", () => els.fileInput.click());
+      document.getElementById("uploadBgBtn").addEventListener("click", () => els.bgFileInput.click());
+      document.getElementById("clearBgBtn").addEventListener("click", clearBackgroundImage);
       document.getElementById("fillRowBtn").addEventListener("click", fillSelectedRow);
       document.getElementById("outlineBtn").addEventListener("click", outlineGrid);
 
       els.fileInput.addEventListener("change", importJson);
+      els.bgFileInput.addEventListener("change", importBackgroundImage);
       els.customColor.addEventListener("input", event => {
         state.color = event.target.value;
         buildSwatches();
+      });
+      [els.bgOpacityInput, els.bgScaleInput, els.bgOffsetXInput, els.bgOffsetYInput].forEach(input => {
+        input.addEventListener("change", () => {
+          state.background.opacity = clamp(Math.round(Number(els.bgOpacityInput.value)), 0, 100);
+          state.background.scale = clamp(Math.round(Number(els.bgScaleInput.value)), 10, 300);
+          state.background.offsetX = clamp(Math.round(Number(els.bgOffsetXInput.value)), -2000, 2000);
+          state.background.offsetY = clamp(Math.round(Number(els.bgOffsetYInput.value)), -2000, 2000);
+          updateInputs();
+          render();
+        });
+      });
+      [els.presetColsInput, els.presetRowsInput].forEach(input => {
+        input.addEventListener("change", () => {
+          state.presetCols = clamp(Math.round(Number(els.presetColsInput.value)), 1, 21);
+          state.presetRows = clamp(Math.round(Number(els.presetRowsInput.value)), 1, 21);
+          updateInputs();
+          render();
+        });
       });
       els.titleInput.addEventListener("input", event => {
         state.title = event.target.value.trim() || "未命名图案";
@@ -872,13 +1007,8 @@
     function paintAt(event, startAction) {
       const pos = eventToCell(event);
       if (!pos) return;
-      const current = state.grid[pos.row][pos.col];
-      const next = state.tool === "erase"
-        ? { stitch: "empty", color: "#24221f" }
-        : { stitch: state.tool, color: state.color };
-      if (current.stitch === next.stitch && sameColor(current.color, next.color)) return;
-      if (startAction) pushUndo();
-      state.grid[pos.row][pos.col] = next;
+      const changed = applyPresetAt(pos, startAction);
+      if (!changed) return;
       state.selected = pos;
       state.redo = [];
       render();
@@ -894,6 +1024,85 @@
       const row = Math.floor(chartY / state.cell);
       if (row < 0 || row >= state.rows || col < 0 || col >= state.cols) return null;
       return { row, col };
+    }
+
+    function applyPresetAt(pos, startAction) {
+      const cells = getPresetCells(pos.row, pos.col);
+      const next = state.tool === "erase"
+        ? { stitch: "empty", color: "#24221f" }
+        : { stitch: state.tool, color: state.color };
+      const changed = [];
+      cells.forEach(cell => {
+        if (cell.row < 0 || cell.row >= state.rows || cell.col < 0 || cell.col >= state.cols) return;
+        const current = state.grid[cell.row][cell.col];
+        if (current.stitch === next.stitch && sameColor(current.color, next.color)) return;
+        changed.push(cell);
+      });
+      if (!changed.length) return false;
+      if (startAction) pushUndo();
+      changed.forEach(cell => {
+        state.grid[cell.row][cell.col] = { ...next };
+      });
+      return true;
+    }
+
+    function getPresetCells(centerRow, centerCol) {
+      if (state.preset === "single") return [{ row: centerRow, col: centerCol }];
+      const width = clamp(Math.round(state.presetCols), 1, 21);
+      const height = clamp(Math.round(state.presetRows), 1, 21);
+      const left = centerCol - Math.floor(width / 2);
+      const top = centerRow - Math.floor(height / 2);
+      const star = state.preset === "star" ? starPolygon(width, height) : null;
+      const cells = [];
+      for (let r = 0; r < height; r++) {
+        for (let c = 0; c < width; c++) {
+          if (state.preset === "rect") {
+            cells.push({ row: top + r, col: left + c });
+            continue;
+          }
+          const nx = width === 1 ? 0 : (c / (width - 1)) * 2 - 1;
+          const ny = height === 1 ? 0 : (r / (height - 1)) * 2 - 1;
+          if (state.preset === "circle") {
+            if ((nx * nx) + (ny * ny) <= 1.02) cells.push({ row: top + r, col: left + c });
+            continue;
+          }
+          if (state.preset === "star" && pointInPolygon({ x: c + .5, y: r + .5 }, star)) {
+            cells.push({ row: top + r, col: left + c });
+          }
+        }
+      }
+      return cells;
+    }
+
+    function starPolygon(width, height) {
+      const points = [];
+      const cx = width / 2;
+      const cy = height / 2;
+      const outer = Math.max(1.5, Math.min(width, height) * .48);
+      const inner = outer * .45;
+      for (let i = 0; i < 10; i++) {
+        const angle = (-Math.PI / 2) + (i * Math.PI / 5);
+        const radius = i % 2 === 0 ? outer : inner;
+        points.push({
+          x: cx + Math.cos(angle) * radius,
+          y: cy + Math.sin(angle) * radius
+        });
+      }
+      return points;
+    }
+
+    function pointInPolygon(point, polygon) {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x;
+        const yi = polygon[i].y;
+        const xj = polygon[j].x;
+        const yj = polygon[j].y;
+        const intersect = ((yi > point.y) !== (yj > point.y))
+          && (point.x < ((xj - xi) * (point.y - yi)) / ((yj - yi) || .00001) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
     }
 
     function applyCanvasSettings() {
@@ -995,8 +1204,15 @@
       els.rowsInput.value = state.rows;
       els.cellInput.value = state.cell;
       els.numberMode.value = state.numberMode;
+      els.bgOpacityInput.value = state.background.opacity;
+      els.bgScaleInput.value = state.background.scale;
+      els.bgOffsetXInput.value = state.background.offsetX;
+      els.bgOffsetYInput.value = state.background.offsetY;
+      els.presetColsInput.value = state.presetCols;
+      els.presetRowsInput.value = state.presetRows;
       els.titleInput.value = state.title;
       els.customColor.value = normalizeColor(state.color);
+      updateBackgroundInfo();
       setZoom(state.zoom);
     }
 
@@ -1018,6 +1234,7 @@
       ctx.fillStyle = "#fffefa";
       ctx.fillRect(0, 0, width, height);
       drawTitle(width);
+      drawBackgroundImage();
       drawGrid();
       drawCells();
       drawHover();
@@ -1036,6 +1253,27 @@
       ctx.font = "12px Segoe UI, Microsoft YaHei, Arial";
       ctx.textAlign = "right";
       ctx.fillText(`${state.cols} x ${state.rows}`, width - state.gutter, 30);
+    }
+
+    function drawBackgroundImage() {
+      if (!state.background.image || !state.background.src) return;
+      const left = state.gutter;
+      const top = 58;
+      const drawWidth = state.background.naturalWidth * (state.background.scale / 100);
+      const drawHeight = state.background.naturalHeight * (state.background.scale / 100);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(left, top, state.cols * state.cell, state.rows * state.cell);
+      ctx.clip();
+      ctx.globalAlpha = state.background.opacity / 100;
+      ctx.drawImage(
+        state.background.image,
+        left + state.background.offsetX,
+        top + state.background.offsetY,
+        drawWidth,
+        drawHeight
+      );
+      ctx.restore();
     }
 
     function drawGrid() {
@@ -1098,12 +1336,18 @@
     function drawHover() {
       const pos = state.hover || state.selected;
       if (!pos) return;
-      const x = state.gutter + pos.col * state.cell;
-      const y = 58 + pos.row * state.cell;
+      const cells = getPresetCells(pos.row, pos.col);
       ctx.save();
       ctx.strokeStyle = state.hover ? "#2f7d78" : "#cf5f42";
+      ctx.fillStyle = state.hover ? "rgba(47, 125, 120, .10)" : "rgba(207, 95, 66, .10)";
       ctx.lineWidth = 2;
-      ctx.strokeRect(x + 2, y + 2, state.cell - 4, state.cell - 4);
+      cells.forEach(cell => {
+        if (cell.row < 0 || cell.row >= state.rows || cell.col < 0 || cell.col >= state.cols) return;
+        const x = state.gutter + cell.col * state.cell;
+        const y = 58 + cell.row * state.cell;
+        ctx.fillRect(x + 4, y + 4, state.cell - 8, state.cell - 8);
+        ctx.strokeRect(x + 2, y + 2, state.cell - 4, state.cell - 4);
+      });
       ctx.restore();
     }
 
@@ -1179,6 +1423,83 @@
       target.stroke();
     }
 
+    function importBackgroundImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        setBackgroundImage({
+          src: reader.result,
+          name: file.name,
+          opacity: state.background.opacity,
+          scale: state.background.scale,
+          offsetX: state.background.offsetX,
+          offsetY: state.background.offsetY
+        });
+        flashStatus("Reference image loaded");
+      };
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    }
+
+    function clearBackgroundImage() {
+      if (!state.background.src) return;
+      state.background = {
+        src: "",
+        name: "",
+        opacity: 35,
+        scale: 100,
+        offsetX: 0,
+        offsetY: 0,
+        naturalWidth: 0,
+        naturalHeight: 0,
+        image: null
+      };
+      updateInputs();
+      render();
+    }
+
+    function setBackgroundImage(background = {}) {
+      const next = {
+        ...state.background,
+        ...background,
+        opacity: clamp(Math.round(Number(background.opacity ?? state.background.opacity)), 0, 100),
+        scale: clamp(Math.round(Number(background.scale ?? state.background.scale)), 10, 300),
+        offsetX: clamp(Math.round(Number(background.offsetX ?? state.background.offsetX)), -2000, 2000),
+        offsetY: clamp(Math.round(Number(background.offsetY ?? state.background.offsetY)), -2000, 2000),
+        naturalWidth: 0,
+        naturalHeight: 0,
+        image: null
+      };
+      state.background = next;
+      if (!next.src) {
+        updateInputs();
+        render();
+        return;
+      }
+      const image = new Image();
+      image.onload = () => {
+        state.background.image = image;
+        state.background.naturalWidth = image.naturalWidth || image.width;
+        state.background.naturalHeight = image.naturalHeight || image.height;
+        updateInputs();
+        render();
+      };
+      image.src = next.src;
+    }
+
+    function updateBackgroundInfo() {
+      if (!state.background.src) {
+        els.bgInfoText.textContent = "No reference image loaded.";
+        return;
+      }
+      const name = state.background.name || "Embedded image";
+      const size = state.background.naturalWidth && state.background.naturalHeight
+        ? `${state.background.naturalWidth} x ${state.background.naturalHeight}`
+        : "Loading...";
+      els.bgInfoText.textContent = `${name} · ${size}`;
+    }
+
     function updateLegend() {
       const counts = new Map();
       for (const row of state.grid) {
@@ -1204,8 +1525,19 @@
 
     function updateStatus() {
       const stitch = stitches.find(item => item.id === state.tool);
+      const preset = shapePresets.find(item => item.id === state.preset);
       const pos = state.hover ? `第 ${state.rows - state.hover.row} 行，第 ${state.hover.col + 1} 列` : "准备绘制";
-      els.status.textContent = `${pos} · ${stitch?.name || ""}`;
+      els.status.textContent = `${pos} · ${stitch?.abbr || ""} · ${preset?.name || "Single"}`;
+    }
+
+    function shapeSvg(shapeId) {
+      const paths = {
+        single: `<rect x="13" y="13" width="6" height="6" rx="1.5"/>`,
+        rect: `<rect x="7" y="9" width="18" height="14" rx="2"/>`,
+        circle: `<ellipse cx="16" cy="16" rx="9" ry="7"/>`,
+        star: `<path d="m16 7 2.9 5.8 6.4.9-4.6 4.5 1.1 6.3-5.8-3-5.8 3 1.1-6.3-4.6-4.5 6.4-.9Z"/>`
+      };
+      return `<svg viewBox="0 0 32 32" aria-hidden="true">${paths[shapeId] || paths.single}</svg>`;
     }
 
     function symbolSvg(stitchId, color) {
@@ -1240,6 +1572,14 @@
         cols: state.cols,
         cell: state.cell,
         numberMode: state.numberMode,
+        background: {
+          src: state.background.src,
+          name: state.background.name,
+          opacity: state.background.opacity,
+          scale: state.background.scale,
+          offsetX: state.background.offsetX,
+          offsetY: state.background.offsetY
+        },
         grid: state.grid
       };
     }
@@ -1251,6 +1591,17 @@
       state.cols = clamp(Number(data.cols || data.grid?.[0]?.length || 24), 4, 80);
       state.cell = clamp(Number(data.cell || 34), 22, 54);
       state.numberMode = data.numberMode || "both";
+      state.background = {
+        src: "",
+        name: "",
+        opacity: 35,
+        scale: 100,
+        offsetX: 0,
+        offsetY: 0,
+        naturalWidth: 0,
+        naturalHeight: 0,
+        image: null
+      };
       state.grid = blankGrid(state.rows, state.cols);
       if (Array.isArray(data.grid)) {
         for (let r = 0; r < Math.min(state.rows, data.grid.length); r++) {
@@ -1264,6 +1615,7 @@
         }
       }
       state.redo = [];
+      if (data.background?.src) setBackgroundImage(data.background);
       updateInputs();
       render();
     }
