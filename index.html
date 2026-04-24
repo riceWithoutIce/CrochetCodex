@@ -271,6 +271,13 @@
       stroke-linejoin: round;
     }
 
+    .icon-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(47, 125, 120, .24);
+    }
+
     .zoom-pill {
       width: 66px;
       text-align: center;
@@ -290,13 +297,23 @@
       padding: 28px;
       display: grid;
       place-items: start center;
+      cursor: crosshair;
+    }
+
+    .stage-wrap.pan-ready {
+      cursor: grab;
+    }
+
+    .stage-wrap.panning {
+      cursor: grabbing;
+      user-select: none;
     }
 
     .stage {
       background: #fff;
       border: 1px solid #cfc7bb;
       box-shadow: var(--shadow);
-      transform-origin: top center;
+      transform-origin: top left;
       position: relative;
     }
 
@@ -477,6 +494,9 @@
           <button class="icon-btn" id="mirrorBtn" title="水平镜像" aria-label="水平镜像">
             <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="m7 7-4 5 4 5V7Z"/><path d="m17 7 4 5-4 5V7Z"/></svg>
           </button>
+          <button class="icon-btn" id="panBtn" title="拖动画布" aria-label="拖动画布">
+            <svg viewBox="0 0 24 24"><path d="M7 11V7a2 2 0 1 1 4 0v4"/><path d="M11 10V6a2 2 0 1 1 4 0v5"/><path d="M15 11V8a2 2 0 1 1 4 0v7a6 6 0 0 1-6 6h-2a7 7 0 0 1-5.7-3L3 15a2 2 0 0 1 3.2-2.4L8 15"/><path d="M7 11v4"/></svg>
+          </button>
           <button class="icon-btn" id="clearBtn" title="清空画布" aria-label="清空画布">
             <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
           </button>
@@ -573,12 +593,17 @@
       grid: [],
       undo: [],
       redo: [],
-      isPainting: false
+      isPainting: false,
+      panMode: false,
+      isPanning: false,
+      spacePanning: false,
+      panStart: null
     };
 
     const els = {
       canvas: document.getElementById("chart"),
       stage: document.getElementById("stage"),
+      stageWrap: document.getElementById("stageWrap"),
       status: document.getElementById("status"),
       colsInput: document.getElementById("colsInput"),
       rowsInput: document.getElementById("rowsInput"),
@@ -676,12 +701,27 @@
     }
 
     function bindEvents() {
+      els.stageWrap.addEventListener("pointerdown", event => {
+        if (shouldPan(event)) beginPan(event);
+      });
+      els.stageWrap.addEventListener("pointermove", panMove);
+      els.stageWrap.addEventListener("pointerup", endPan);
+      els.stageWrap.addEventListener("pointercancel", endPan);
+      els.stageWrap.addEventListener("lostpointercapture", endPan);
+      els.stageWrap.addEventListener("contextmenu", event => event.preventDefault());
+      els.stageWrap.addEventListener("wheel", zoomWithWheel, { passive: false });
+
       els.canvas.addEventListener("pointerdown", event => {
+        if (shouldPan(event)) {
+          beginPan(event);
+          return;
+        }
         state.isPainting = true;
         els.canvas.setPointerCapture(event.pointerId);
         paintAt(event, true);
       });
       els.canvas.addEventListener("pointermove", event => {
+        if (state.isPanning) return;
         const pos = eventToCell(event);
         state.hover = pos;
         if (state.isPainting) paintAt(event, false);
@@ -699,6 +739,7 @@
       document.getElementById("undoBtn").addEventListener("click", undo);
       document.getElementById("redoBtn").addEventListener("click", redo);
       document.getElementById("mirrorBtn").addEventListener("click", mirrorHorizontal);
+      document.getElementById("panBtn").addEventListener("click", togglePanMode);
       document.getElementById("clearBtn").addEventListener("click", clearGrid);
       document.getElementById("zoomOutBtn").addEventListener("click", () => setZoom(state.zoom - .1));
       document.getElementById("zoomInBtn").addEventListener("click", () => setZoom(state.zoom + .1));
@@ -725,6 +766,12 @@
       });
 
       window.addEventListener("keydown", event => {
+        if (event.code === "Space" && !isTextInput(event.target)) {
+          event.preventDefault();
+          state.spacePanning = true;
+          updatePanUi();
+          return;
+        }
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
           event.preventDefault();
           event.shiftKey ? redo() : undo();
@@ -739,6 +786,85 @@
           buildTools();
         }
       });
+      window.addEventListener("keyup", event => {
+        if (event.code === "Space") {
+          state.spacePanning = false;
+          updatePanUi();
+        }
+      });
+    }
+
+    function shouldPan(event) {
+      return state.panMode || state.spacePanning || event.button === 1 || event.button === 2;
+    }
+
+    function beginPan(event) {
+      state.isPanning = true;
+      state.isPainting = false;
+      state.hover = null;
+      state.panStart = {
+        x: event.clientX,
+        y: event.clientY,
+        left: els.stageWrap.scrollLeft,
+        top: els.stageWrap.scrollTop
+      };
+      els.stageWrap.classList.add("panning");
+      els.stageWrap.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    function panMove(event) {
+      if (!state.isPanning || !state.panStart) return;
+      const dx = event.clientX - state.panStart.x;
+      const dy = event.clientY - state.panStart.y;
+      els.stageWrap.scrollLeft = state.panStart.left - dx;
+      els.stageWrap.scrollTop = state.panStart.top - dy;
+      event.preventDefault();
+    }
+
+    function endPan(event) {
+      if (!state.isPanning) return;
+      state.isPanning = false;
+      state.panStart = null;
+      els.stageWrap.classList.remove("panning");
+      if (event?.pointerId != null && els.stageWrap.hasPointerCapture(event.pointerId)) {
+        els.stageWrap.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    function togglePanMode() {
+      state.panMode = !state.panMode;
+      updatePanUi();
+    }
+
+    function updatePanUi() {
+      document.getElementById("panBtn").classList.toggle("active", state.panMode);
+      els.stageWrap.classList.toggle("pan-ready", state.panMode || state.spacePanning);
+    }
+
+    function zoomWithWheel(event) {
+      event.preventDefault();
+      const direction = event.deltaY < 0 ? 1 : -1;
+      zoomAt(event.clientX, event.clientY, direction * .1);
+    }
+
+    function zoomAt(clientX, clientY, delta) {
+      const before = state.zoom;
+      const wrapRect = els.stageWrap.getBoundingClientRect();
+      const viewportX = clientX - wrapRect.left;
+      const viewportY = clientY - wrapRect.top;
+      const contentX = els.stageWrap.scrollLeft + viewportX;
+      const contentY = els.stageWrap.scrollTop + viewportY;
+      const unscaledX = contentX / before;
+      const unscaledY = contentY / before;
+      setZoom(before + delta);
+      els.stageWrap.scrollLeft = unscaledX * state.zoom - viewportX;
+      els.stageWrap.scrollTop = unscaledY * state.zoom - viewportY;
+    }
+
+    function isTextInput(target) {
+      return ["INPUT", "SELECT", "TEXTAREA"].includes(target?.tagName);
     }
 
     function paintAt(event, startAction) {
@@ -857,7 +983,8 @@
 
     function setZoom(value) {
       state.zoom = clamp(Math.round(value * 10) / 10, .5, 1.8);
-      els.stage.style.transform = `scale(${state.zoom})`;
+      els.stage.style.zoom = state.zoom;
+      els.stage.style.transform = "";
       els.zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
     }
 
@@ -1001,7 +1128,6 @@
       } else if (stitchId === "hdc") {
         line(target, x, y - s * .74, x, y + s * .72);
         line(target, x - s * .48, y - s * .7, x + s * .48, y - s * .7);
-        line(target, x - s * .42, y - s * .06, x + s * .42, y + s * .18);
       } else if (stitchId === "dc") {
         line(target, x, y - s * .76, x, y + s * .72);
         line(target, x - s * .5, y - s * .7, x + s * .5, y - s * .7);
@@ -1086,7 +1212,7 @@
         ch: `<ellipse cx="16" cy="16" rx="9" ry="5" transform="rotate(-18 16 16)" fill="none" stroke="${color}" stroke-width="2.4"/>`,
         slst: `<circle cx="16" cy="16" r="4" fill="${color}"/>`,
         sc: `<path d="M9 9l14 14M23 9 9 23" stroke="${color}" stroke-width="2.6" stroke-linecap="round"/>`,
-        hdc: `<path d="M16 7v18M10 7h12M10 16l12 4" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
+        hdc: `<path d="M16 7v18M10 7h12" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
         dc: `<path d="M16 7v18M10 7h12M10 15l12 3" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
         tr: `<path d="M16 7v18M10 7h12M10 13l12 3M10 19l12 3" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
         inc: `<path d="M16 25 9 8M16 25l7-17M7 8h5M20 8h5" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`,
