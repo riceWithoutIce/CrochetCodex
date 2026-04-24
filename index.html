@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>钩针图案绘制器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f3ef;
+      --panel: #ffffff;
+      --ink: #24221f;
+      --muted: #6d6860;
+      --line: #d9d2c8;
+      --soft: #eee8df;
+      --accent: #2f7d78;
+      --accent-2: #cf5f42;
+      --accent-soft: #dff0ee;
+      --shadow: 0 16px 36px rgba(44, 38, 30, .12);
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(47, 125, 120, .12), transparent 34%),
+        linear-gradient(315deg, rgba(207, 95, 66, .10), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 7px;
+      min-height: 34px;
+      padding: 7px 10px;
+      cursor: pointer;
+      transition: background .16s ease, border-color .16s ease, transform .12s ease;
+    }
+
+    button:hover {
+      background: #faf8f5;
+      border-color: #bfb6aa;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 292px minmax(420px, 1fr) 278px;
+      height: 100vh;
+      min-width: 980px;
+    }
+
+    .sidebar,
+    .inspector {
+      background: rgba(255, 255, 255, .88);
+      backdrop-filter: blur(14px);
+      border-color: var(--line);
+      overflow-y: auto;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      padding: 18px;
+    }
+
+    .inspector {
+      border-left: 1px solid var(--line);
+      padding: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: conic-gradient(from 120deg, #2f7d78, #8eb9b5, #e7c98f, #cf5f42, #2f7d78);
+      box-shadow: inset 0 0 0 6px rgba(255, 255, 255, .7);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 12px;
+      top: 12px;
+      border: 3px solid #fff;
+      border-radius: 50%;
+    }
+
+    .brand h1 {
+      font-size: 20px;
+      line-height: 1.15;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      color: var(--muted);
+      margin: 4px 0 0;
+      font-size: 12px;
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+
+    .section:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #39352f;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="color"],
+    select {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 6px 8px;
+    }
+
+    input[type="color"] {
+      padding: 3px;
+    }
+
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tool {
+      display: grid;
+      place-items: center;
+      min-height: 72px;
+      padding: 6px;
+      gap: 4px;
+    }
+
+    .tool svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .tool span {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .tool.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px rgba(47, 125, 120, .24);
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 7px;
+    }
+
+    .swatch {
+      aspect-ratio: 1;
+      min-height: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(36, 34, 31, .18);
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .8);
+    }
+
+    .swatch.active {
+      border-color: var(--ink);
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 62px;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: blur(14px);
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      padding: 7px;
+      display: grid;
+      place-items: center;
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .zoom-pill {
+      width: 66px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .stage-wrap {
+      overflow: auto;
+      padding: 28px;
+      display: grid;
+      place-items: start center;
+    }
+
+    .stage {
+      background: #fff;
+      border: 1px solid #cfc7bb;
+      box-shadow: var(--shadow);
+      transform-origin: top center;
+      position: relative;
+    }
+
+    #chart {
+      display: block;
+      background: #fffefa;
+      touch-action: none;
+    }
+
+    .status {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      pointer-events: none;
+      color: rgba(36, 34, 31, .55);
+      font-size: 12px;
+      background: rgba(255, 255, 255, .74);
+      border: 1px solid rgba(217, 210, 200, .72);
+      border-radius: 7px;
+      padding: 4px 8px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+    }
+
+    .legend-row {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 7px;
+      min-height: 42px;
+    }
+
+    .legend-icon svg {
+      width: 27px;
+      height: 27px;
+      display: block;
+    }
+
+    .legend-name {
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .legend-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+    }
+
+    .actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .actions.two {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .button-primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button-primary:hover {
+      background: #276b67;
+      border-color: #276b67;
+    }
+
+    .button-warn {
+      border-color: rgba(207, 95, 66, .55);
+      color: #9c3d27;
+    }
+
+    @media (max-width: 1100px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        min-width: 0;
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar,
+      .inspector {
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .tools {
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      .stage-wrap {
+        min-height: 62vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <h1>钩针图案绘制器</h1>
+          <p>符号图、配色、图例一屏完成</p>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-title">画布</div>
+        <div class="field-grid">
+          <label>列数
+            <input id="colsInput" type="number" min="4" max="80" value="24">
+          </label>
+          <label>行数
+            <input id="rowsInput" type="number" min="4" max="80" value="18">
+          </label>
+          <label>格子大小
+            <input id="cellInput" type="number" min="22" max="54" value="34">
+          </label>
+          <label>编号方向
+            <select id="numberMode">
+              <option value="both">左右交替</option>
+              <option value="right">右侧</option>
+              <option value="left">左侧</option>
+              <option value="none">隐藏</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">针法</div>
+        <div class="tools" id="toolPalette"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">颜色</div>
+        <div class="swatches" id="swatches"></div>
+        <div style="height:10px"></div>
+        <label>自定义线色
+          <input id="customColor" type="color" value="#2f7d78">
+        </label>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button class="icon-btn" id="undoBtn" title="撤销" aria-label="撤销">
+            <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-1"/></svg>
+          </button>
+          <button class="icon-btn" id="redoBtn" title="重做" aria-label="重做">
+            <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h1"/></svg>
+          </button>
+          <button class="icon-btn" id="mirrorBtn" title="水平镜像" aria-label="水平镜像">
+            <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="m7 7-4 5 4 5V7Z"/><path d="m17 7 4 5-4 5V7Z"/></svg>
+          </button>
+          <button class="icon-btn" id="clearBtn" title="清空画布" aria-label="清空画布">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
+          </button>
+        </div>
+        <div class="toolbar-group">
+          <button class="icon-btn" id="zoomOutBtn" title="缩小" aria-label="缩小">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="m16 16 5 5"/></svg>
+          </button>
+          <div class="zoom-pill" id="zoomLabel">100%</div>
+          <button class="icon-btn" id="zoomInBtn" title="放大" aria-label="放大">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="M11 8v6"/><path d="m16 16 5 5"/></svg>
+          </button>
+        </div>
+        <div class="toolbar-group">
+          <button id="saveBtn" class="button-primary">保存</button>
+          <button id="exportPngBtn">PNG</button>
+          <button id="exportSvgBtn">SVG</button>
+        </div>
+      </div>
+      <div class="stage-wrap" id="stageWrap">
+        <div class="stage" id="stage">
+          <canvas id="chart" width="980" height="720"></canvas>
+          <div class="status" id="status">准备绘制</div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="inspector">
+      <section class="section">
+        <div class="section-title">作品</div>
+        <label>名称
+          <input id="titleInput" type="text" value="我的钩针图案">
+        </label>
+      </section>
+
+      <section class="section">
+        <div class="section-title">图例</div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">文件</div>
+        <div class="actions">
+          <button id="exportJsonBtn">导出 JSON</button>
+          <button id="importJsonBtn">导入 JSON</button>
+          <input id="fileInput" class="hidden-file" type="file" accept="application/json,.json">
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">快速操作</div>
+        <div class="actions two">
+          <button id="fillRowBtn">填满当前行</button>
+          <button id="outlineBtn">边框标记</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">状态</div>
+        <p class="note" id="summaryText"></p>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const stitches = [
+      { id: "empty", name: "空", abbr: "空", draw: "empty" },
+      { id: "ch", name: "锁针", abbr: "ch", draw: "chain" },
+      { id: "slst", name: "引拔针", abbr: "sl st", draw: "dot" },
+      { id: "sc", name: "短针", abbr: "sc", draw: "cross" },
+      { id: "hdc", name: "中长针", abbr: "hdc", draw: "halfDouble" },
+      { id: "dc", name: "长针", abbr: "dc", draw: "double" },
+      { id: "tr", name: "长长针", abbr: "tr", draw: "treble" },
+      { id: "inc", name: "加针", abbr: "inc", draw: "increase" },
+      { id: "dec", name: "减针", abbr: "dec", draw: "decrease" },
+      { id: "bobble", name: "枣形针", abbr: "bob", draw: "bobble" },
+      { id: "picot", name: "狗牙针", abbr: "picot", draw: "picot" },
+      { id: "erase", name: "橡皮", abbr: "擦", draw: "eraser" }
+    ];
+
+    const swatchColors = ["#24221f", "#2f7d78", "#cf5f42", "#8f5b9a", "#d69b2d", "#5c7f45", "#4d76b9", "#b34d66", "#8b6b4f", "#6d6860", "#ffffff", "#f1d7c3"];
+    const state = {
+      rows: 18,
+      cols: 24,
+      cell: 34,
+      gutter: 42,
+      zoom: 1,
+      tool: "sc",
+      color: "#2f7d78",
+      title: "我的钩针图案",
+      numberMode: "both",
+      hover: null,
+      selected: null,
+      grid: [],
+      undo: [],
+      redo: [],
+      isPainting: false
+    };
+
+    const els = {
+      canvas: document.getElementById("chart"),
+      stage: document.getElementById("stage"),
+      status: document.getElementById("status"),
+      colsInput: document.getElementById("colsInput"),
+      rowsInput: document.getElementById("rowsInput"),
+      cellInput: document.getElementById("cellInput"),
+      numberMode: document.getElementById("numberMode"),
+      toolPalette: document.getElementById("toolPalette"),
+      swatches: document.getElementById("swatches"),
+      customColor: document.getElementById("customColor"),
+      legend: document.getElementById("legend"),
+      summaryText: document.getElementById("summaryText"),
+      zoomLabel: document.getElementById("zoomLabel"),
+      titleInput: document.getElementById("titleInput"),
+      fileInput: document.getElementById("fileInput")
+    };
+
+    const ctx = els.canvas.getContext("2d");
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+    function blankGrid(rows, cols) {
+      return Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => ({ stitch: "empty", color: "#24221f" }))
+      );
+    }
+
+    function copyGrid(grid = state.grid) {
+      return grid.map(row => row.map(cell => ({ ...cell })));
+    }
+
+    function init() {
+      const stored = localStorage.getItem("crochet-chart-project");
+      if (stored) {
+        try {
+          loadProject(JSON.parse(stored), false);
+        } catch {
+          state.grid = blankGrid(state.rows, state.cols);
+        }
+      } else {
+        state.grid = blankGrid(state.rows, state.cols);
+        seedSample();
+      }
+      buildTools();
+      buildSwatches();
+      bindEvents();
+      updateInputs();
+      render();
+    }
+
+    function seedSample() {
+      const mid = Math.floor(state.cols / 2);
+      for (let r = 2; r < Math.min(state.rows, 12); r++) {
+        const width = Math.min(r + 2, 12);
+        for (let c = mid - Math.floor(width / 2); c <= mid + Math.floor(width / 2); c++) {
+          if (state.grid[r] && state.grid[r][c]) {
+            state.grid[r][c] = {
+              stitch: r % 3 === 0 ? "dc" : r % 3 === 1 ? "sc" : "ch",
+              color: r % 2 ? "#2f7d78" : "#cf5f42"
+            };
+          }
+        }
+      }
+    }
+
+    function buildTools() {
+      els.toolPalette.innerHTML = "";
+      stitches.forEach(stitch => {
+        const btn = document.createElement("button");
+        btn.className = `tool${state.tool === stitch.id ? " active" : ""}`;
+        btn.type = "button";
+        btn.title = stitch.name;
+        btn.dataset.tool = stitch.id;
+        btn.innerHTML = `${symbolSvg(stitch.id, stitch.id === "empty" ? "#b7aea2" : "#24221f")}<span>${stitch.abbr}</span>`;
+        btn.addEventListener("click", () => {
+          state.tool = stitch.id;
+          buildTools();
+        });
+        els.toolPalette.appendChild(btn);
+      });
+    }
+
+    function buildSwatches() {
+      els.swatches.innerHTML = "";
+      swatchColors.forEach(color => {
+        const btn = document.createElement("button");
+        btn.className = `swatch${sameColor(state.color, color) ? " active" : ""}`;
+        btn.type = "button";
+        btn.title = color;
+        btn.style.background = color;
+        btn.addEventListener("click", () => {
+          state.color = color;
+          els.customColor.value = normalizeColor(color);
+          buildSwatches();
+        });
+        els.swatches.appendChild(btn);
+      });
+    }
+
+    function bindEvents() {
+      els.canvas.addEventListener("pointerdown", event => {
+        state.isPainting = true;
+        els.canvas.setPointerCapture(event.pointerId);
+        paintAt(event, true);
+      });
+      els.canvas.addEventListener("pointermove", event => {
+        const pos = eventToCell(event);
+        state.hover = pos;
+        if (state.isPainting) paintAt(event, false);
+        render();
+      });
+      els.canvas.addEventListener("pointerup", event => {
+        state.isPainting = false;
+        els.canvas.releasePointerCapture(event.pointerId);
+      });
+      els.canvas.addEventListener("pointerleave", () => {
+        state.hover = null;
+        render();
+      });
+
+      document.getElementById("undoBtn").addEventListener("click", undo);
+      document.getElementById("redoBtn").addEventListener("click", redo);
+      document.getElementById("mirrorBtn").addEventListener("click", mirrorHorizontal);
+      document.getElementById("clearBtn").addEventListener("click", clearGrid);
+      document.getElementById("zoomOutBtn").addEventListener("click", () => setZoom(state.zoom - .1));
+      document.getElementById("zoomInBtn").addEventListener("click", () => setZoom(state.zoom + .1));
+      document.getElementById("saveBtn").addEventListener("click", saveProject);
+      document.getElementById("exportPngBtn").addEventListener("click", exportPng);
+      document.getElementById("exportSvgBtn").addEventListener("click", exportSvg);
+      document.getElementById("exportJsonBtn").addEventListener("click", exportJson);
+      document.getElementById("importJsonBtn").addEventListener("click", () => els.fileInput.click());
+      document.getElementById("fillRowBtn").addEventListener("click", fillSelectedRow);
+      document.getElementById("outlineBtn").addEventListener("click", outlineGrid);
+
+      els.fileInput.addEventListener("change", importJson);
+      els.customColor.addEventListener("input", event => {
+        state.color = event.target.value;
+        buildSwatches();
+      });
+      els.titleInput.addEventListener("input", event => {
+        state.title = event.target.value.trim() || "未命名图案";
+        render();
+      });
+
+      [els.colsInput, els.rowsInput, els.cellInput, els.numberMode].forEach(input => {
+        input.addEventListener("change", applyCanvasSettings);
+      });
+
+      window.addEventListener("keydown", event => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+          event.preventDefault();
+          event.shiftKey ? redo() : undo();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
+          event.preventDefault();
+          redo();
+        }
+        const tool = stitches.find(item => item.abbr.toLowerCase() === event.key.toLowerCase());
+        if (tool) {
+          state.tool = tool.id;
+          buildTools();
+        }
+      });
+    }
+
+    function paintAt(event, startAction) {
+      const pos = eventToCell(event);
+      if (!pos) return;
+      const current = state.grid[pos.row][pos.col];
+      const next = state.tool === "erase"
+        ? { stitch: "empty", color: "#24221f" }
+        : { stitch: state.tool, color: state.color };
+      if (current.stitch === next.stitch && sameColor(current.color, next.color)) return;
+      if (startAction) pushUndo();
+      state.grid[pos.row][pos.col] = next;
+      state.selected = pos;
+      state.redo = [];
+      render();
+    }
+
+    function eventToCell(event) {
+      const rect = els.canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / state.zoom;
+      const y = (event.clientY - rect.top) / state.zoom;
+      const chartX = x - state.gutter;
+      const chartY = y - 58;
+      const col = Math.floor(chartX / state.cell);
+      const row = Math.floor(chartY / state.cell);
+      if (row < 0 || row >= state.rows || col < 0 || col >= state.cols) return null;
+      return { row, col };
+    }
+
+    function applyCanvasSettings() {
+      pushUndo();
+      const nextCols = clamp(Number(els.colsInput.value), 4, 80);
+      const nextRows = clamp(Number(els.rowsInput.value), 4, 80);
+      const nextCell = clamp(Number(els.cellInput.value), 22, 54);
+      const nextGrid = blankGrid(nextRows, nextCols);
+      for (let r = 0; r < Math.min(state.rows, nextRows); r++) {
+        for (let c = 0; c < Math.min(state.cols, nextCols); c++) {
+          nextGrid[r][c] = { ...state.grid[r][c] };
+        }
+      }
+      state.rows = nextRows;
+      state.cols = nextCols;
+      state.cell = nextCell;
+      state.numberMode = els.numberMode.value;
+      state.grid = nextGrid;
+      state.redo = [];
+      updateInputs();
+      render();
+    }
+
+    function pushUndo() {
+      state.undo.push(copyGrid());
+      if (state.undo.length > 60) state.undo.shift();
+      document.getElementById("undoBtn").disabled = false;
+    }
+
+    function undo() {
+      if (!state.undo.length) return;
+      state.redo.push(copyGrid());
+      state.grid = state.undo.pop();
+      state.selected = null;
+      syncSizeFromGrid();
+      render();
+    }
+
+    function redo() {
+      if (!state.redo.length) return;
+      state.undo.push(copyGrid());
+      state.grid = state.redo.pop();
+      state.selected = null;
+      syncSizeFromGrid();
+      render();
+    }
+
+    function clearGrid() {
+      if (!hasContent()) return;
+      pushUndo();
+      state.grid = blankGrid(state.rows, state.cols);
+      state.redo = [];
+      state.selected = null;
+      render();
+    }
+
+    function mirrorHorizontal() {
+      pushUndo();
+      state.grid = state.grid.map(row => row.slice().reverse());
+      state.redo = [];
+      render();
+    }
+
+    function fillSelectedRow() {
+      const row = state.selected?.row ?? state.hover?.row;
+      if (row == null) return;
+      pushUndo();
+      for (let c = 0; c < state.cols; c++) {
+        state.grid[row][c] = state.tool === "erase"
+          ? { stitch: "empty", color: "#24221f" }
+          : { stitch: state.tool, color: state.color };
+      }
+      state.redo = [];
+      render();
+    }
+
+    function outlineGrid() {
+      pushUndo();
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          if (r === 0 || c === 0 || r === state.rows - 1 || c === state.cols - 1) {
+            state.grid[r][c] = { stitch: state.tool === "erase" ? "sc" : state.tool, color: state.color };
+          }
+        }
+      }
+      state.redo = [];
+      render();
+    }
+
+    function setZoom(value) {
+      state.zoom = clamp(Math.round(value * 10) / 10, .5, 1.8);
+      els.stage.style.transform = `scale(${state.zoom})`;
+      els.zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
+    }
+
+    function updateInputs() {
+      els.colsInput.value = state.cols;
+      els.rowsInput.value = state.rows;
+      els.cellInput.value = state.cell;
+      els.numberMode.value = state.numberMode;
+      els.titleInput.value = state.title;
+      els.customColor.value = normalizeColor(state.color);
+      setZoom(state.zoom);
+    }
+
+    function syncSizeFromGrid() {
+      state.rows = state.grid.length;
+      state.cols = state.grid[0]?.length || state.cols;
+      updateInputs();
+    }
+
+    function render() {
+      const width = state.cols * state.cell + state.gutter * 2;
+      const height = state.rows * state.cell + 92;
+      els.canvas.style.width = `${width}px`;
+      els.canvas.style.height = `${height}px`;
+      els.canvas.width = Math.round(width * dpr);
+      els.canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#fffefa";
+      ctx.fillRect(0, 0, width, height);
+      drawTitle(width);
+      drawGrid();
+      drawCells();
+      drawHover();
+      updateLegend();
+      updateStatus();
+      document.getElementById("undoBtn").disabled = !state.undo.length;
+      document.getElementById("redoBtn").disabled = !state.redo.length;
+    }
+
+    function drawTitle(width) {
+      ctx.fillStyle = "#24221f";
+      ctx.font = "700 18px Segoe UI, Microsoft YaHei, Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(state.title, state.gutter, 30);
+      ctx.fillStyle = "#6d6860";
+      ctx.font = "12px Segoe UI, Microsoft YaHei, Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(`${state.cols} x ${state.rows}`, width - state.gutter, 30);
+    }
+
+    function drawGrid() {
+      const left = state.gutter;
+      const top = 58;
+      const right = left + state.cols * state.cell;
+      const bottom = top + state.rows * state.cell;
+      ctx.strokeStyle = "#ded7ce";
+      ctx.lineWidth = 1;
+      for (let c = 0; c <= state.cols; c++) {
+        const x = left + c * state.cell + .5;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+      }
+      for (let r = 0; r <= state.rows; r++) {
+        const y = top + r * state.cell + .5;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "#7f756a";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(left + .5, top + .5, state.cols * state.cell, state.rows * state.cell);
+      drawRowNumbers(top, left, right);
+    }
+
+    function drawRowNumbers(top, left, right) {
+      if (state.numberMode === "none") return;
+      ctx.font = "12px Segoe UI, Microsoft YaHei, Arial";
+      ctx.fillStyle = "#6d6860";
+      ctx.textBaseline = "middle";
+      for (let r = 0; r < state.rows; r++) {
+        const rowNo = state.rows - r;
+        const y = top + r * state.cell + state.cell / 2;
+        const side = state.numberMode === "both" ? (rowNo % 2 ? "right" : "left") : state.numberMode;
+        ctx.textAlign = side === "right" ? "left" : "right";
+        ctx.fillText(rowNo, side === "right" ? right + 12 : left - 12, y);
+      }
+      ctx.textBaseline = "alphabetic";
+    }
+
+    function drawCells() {
+      const left = state.gutter;
+      const top = 58;
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.grid[r][c];
+          if (cell.stitch === "empty") continue;
+          const x = left + c * state.cell + state.cell / 2;
+          const y = top + r * state.cell + state.cell / 2;
+          drawSymbol(ctx, cell.stitch, x, y, state.cell * .66, cell.color);
+        }
+      }
+    }
+
+    function drawHover() {
+      const pos = state.hover || state.selected;
+      if (!pos) return;
+      const x = state.gutter + pos.col * state.cell;
+      const y = 58 + pos.row * state.cell;
+      ctx.save();
+      ctx.strokeStyle = state.hover ? "#2f7d78" : "#cf5f42";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 2, y + 2, state.cell - 4, state.cell - 4);
+      ctx.restore();
+    }
+
+    function drawSymbol(target, stitchId, x, y, size, color) {
+      target.save();
+      target.strokeStyle = color;
+      target.fillStyle = color;
+      target.lineWidth = Math.max(2, size / 11);
+      target.lineCap = "round";
+      target.lineJoin = "round";
+      const s = size / 2;
+
+      if (stitchId === "ch") {
+        target.beginPath();
+        target.ellipse(x, y, s * .78, s * .42, -.28, 0, Math.PI * 2);
+        target.stroke();
+      } else if (stitchId === "slst") {
+        target.beginPath();
+        target.arc(x, y, s * .22, 0, Math.PI * 2);
+        target.fill();
+      } else if (stitchId === "sc") {
+        line(target, x - s * .54, y - s * .54, x + s * .54, y + s * .54);
+        line(target, x + s * .54, y - s * .54, x - s * .54, y + s * .54);
+      } else if (stitchId === "hdc") {
+        line(target, x, y - s * .74, x, y + s * .72);
+        line(target, x - s * .48, y - s * .7, x + s * .48, y - s * .7);
+        line(target, x - s * .42, y - s * .06, x + s * .42, y + s * .18);
+      } else if (stitchId === "dc") {
+        line(target, x, y - s * .76, x, y + s * .72);
+        line(target, x - s * .5, y - s * .7, x + s * .5, y - s * .7);
+        line(target, x - s * .48, y - s * .12, x + s * .48, y + s * .12);
+      } else if (stitchId === "tr") {
+        line(target, x, y - s * .76, x, y + s * .72);
+        line(target, x - s * .5, y - s * .7, x + s * .5, y - s * .7);
+        line(target, x - s * .48, y - s * .25, x + s * .48, y - s * .02);
+        line(target, x - s * .48, y + s * .16, x + s * .48, y + s * .39);
+      } else if (stitchId === "inc") {
+        line(target, x, y + s * .68, x - s * .52, y - s * .58);
+        line(target, x, y + s * .68, x + s * .52, y - s * .58);
+        line(target, x - s * .72, y - s * .58, x - s * .32, y - s * .58);
+        line(target, x + s * .32, y - s * .58, x + s * .72, y - s * .58);
+      } else if (stitchId === "dec") {
+        line(target, x - s * .54, y + s * .68, x, y - s * .58);
+        line(target, x + s * .54, y + s * .68, x, y - s * .58);
+        line(target, x - s * .72, y + s * .68, x - s * .32, y + s * .68);
+        line(target, x + s * .32, y + s * .68, x + s * .72, y + s * .68);
+      } else if (stitchId === "bobble") {
+        for (let i = 0; i < 5; i++) {
+          target.beginPath();
+          target.arc(x + (i - 2) * s * .24, y + Math.abs(i - 2) * s * .08, s * .24, 0, Math.PI * 2);
+          target.stroke();
+        }
+      } else if (stitchId === "picot") {
+        target.beginPath();
+        target.moveTo(x - s * .58, y + s * .45);
+        target.quadraticCurveTo(x, y - s * .85, x + s * .58, y + s * .45);
+        target.stroke();
+        target.beginPath();
+        target.arc(x, y - s * .28, s * .2, 0, Math.PI * 2);
+        target.stroke();
+      } else if (stitchId === "eraser") {
+        target.strokeStyle = "#9b9185";
+        target.strokeRect(x - s * .55, y - s * .35, s * 1.1, s * .7);
+        line(target, x - s * .18, y - s * .35, x + s * .18, y + s * .35);
+      }
+
+      target.restore();
+    }
+
+    function line(target, x1, y1, x2, y2) {
+      target.beginPath();
+      target.moveTo(x1, y1);
+      target.lineTo(x2, y2);
+      target.stroke();
+    }
+
+    function updateLegend() {
+      const counts = new Map();
+      for (const row of state.grid) {
+        for (const cell of row) {
+          if (cell.stitch !== "empty") counts.set(cell.stitch, (counts.get(cell.stitch) || 0) + 1);
+        }
+      }
+      els.legend.innerHTML = "";
+      const used = stitches.filter(stitch => stitch.id !== "erase" && stitch.id !== "empty" && counts.has(stitch.id));
+      if (!used.length) {
+        els.legend.innerHTML = `<p class="note">画布还没有针法符号。</p>`;
+      } else {
+        used.forEach(stitch => {
+          const row = document.createElement("div");
+          row.className = "legend-row";
+          row.innerHTML = `<div class="legend-icon">${symbolSvg(stitch.id, "#24221f")}</div><div class="legend-name">${stitch.name} / ${stitch.abbr}</div><div class="legend-count">${counts.get(stitch.id)}</div>`;
+          els.legend.appendChild(row);
+        });
+      }
+      const total = [...counts.values()].reduce((sum, value) => sum + value, 0);
+      els.summaryText.textContent = `${state.title}：${state.cols} 列 x ${state.rows} 行，已放置 ${total} 个针法符号。`;
+    }
+
+    function updateStatus() {
+      const stitch = stitches.find(item => item.id === state.tool);
+      const pos = state.hover ? `第 ${state.rows - state.hover.row} 行，第 ${state.hover.col + 1} 列` : "准备绘制";
+      els.status.textContent = `${pos} · ${stitch?.name || ""}`;
+    }
+
+    function symbolSvg(stitchId, color) {
+      const paths = {
+        empty: `<rect x="7" y="7" width="18" height="18" rx="2" fill="none" stroke="${color}" stroke-dasharray="3 3"/>`,
+        ch: `<ellipse cx="16" cy="16" rx="9" ry="5" transform="rotate(-18 16 16)" fill="none" stroke="${color}" stroke-width="2.4"/>`,
+        slst: `<circle cx="16" cy="16" r="4" fill="${color}"/>`,
+        sc: `<path d="M9 9l14 14M23 9 9 23" stroke="${color}" stroke-width="2.6" stroke-linecap="round"/>`,
+        hdc: `<path d="M16 7v18M10 7h12M10 16l12 4" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
+        dc: `<path d="M16 7v18M10 7h12M10 15l12 3" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
+        tr: `<path d="M16 7v18M10 7h12M10 13l12 3M10 19l12 3" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`,
+        inc: `<path d="M16 25 9 8M16 25l7-17M7 8h5M20 8h5" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`,
+        dec: `<path d="M9 25 16 8M23 25 16 8M7 25h5M20 25h5" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`,
+        bobble: `<circle cx="10" cy="17" r="3.4" fill="none" stroke="${color}" stroke-width="2"/><circle cx="16" cy="14" r="3.4" fill="none" stroke="${color}" stroke-width="2"/><circle cx="22" cy="17" r="3.4" fill="none" stroke="${color}" stroke-width="2"/>`,
+        picot: `<path d="M8 22Q16 6 24 22" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="13" r="3" fill="none" stroke="${color}" stroke-width="2"/>`,
+        eraser: `<path d="M9 13 18 8l6 10-9 5-6-10Z" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/><path d="m13 11 6 10" stroke="${color}" stroke-width="2"/>`
+      };
+      return `<svg viewBox="0 0 32 32" aria-hidden="true">${paths[stitchId] || paths.empty}</svg>`;
+    }
+
+    function saveProject() {
+      localStorage.setItem("crochet-chart-project", JSON.stringify(projectData()));
+      flashStatus("已保存到浏览器");
+    }
+
+    function projectData() {
+      return {
+        app: "crochet-chart-designer",
+        version: 1,
+        title: state.title,
+        rows: state.rows,
+        cols: state.cols,
+        cell: state.cell,
+        numberMode: state.numberMode,
+        grid: state.grid
+      };
+    }
+
+    function loadProject(data, recordUndo = true) {
+      if (recordUndo && state.grid.length) pushUndo();
+      state.title = data.title || "我的钩针图案";
+      state.rows = clamp(Number(data.rows || data.grid?.length || 18), 4, 80);
+      state.cols = clamp(Number(data.cols || data.grid?.[0]?.length || 24), 4, 80);
+      state.cell = clamp(Number(data.cell || 34), 22, 54);
+      state.numberMode = data.numberMode || "both";
+      state.grid = blankGrid(state.rows, state.cols);
+      if (Array.isArray(data.grid)) {
+        for (let r = 0; r < Math.min(state.rows, data.grid.length); r++) {
+          for (let c = 0; c < Math.min(state.cols, data.grid[r].length); c++) {
+            const cell = data.grid[r][c] || {};
+            state.grid[r][c] = {
+              stitch: stitches.some(item => item.id === cell.stitch) ? cell.stitch : "empty",
+              color: normalizeColor(cell.color || "#24221f")
+            };
+          }
+        }
+      }
+      state.redo = [];
+      updateInputs();
+      render();
+    }
+
+    function exportJson() {
+      downloadBlob(`${safeName(state.title)}.json`, JSON.stringify(projectData(), null, 2), "application/json");
+    }
+
+    function importJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          loadProject(JSON.parse(reader.result), true);
+          flashStatus("JSON 已导入");
+        } catch {
+          flashStatus("JSON 格式无法识别");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function exportPng() {
+      const link = document.createElement("a");
+      link.download = `${safeName(state.title)}.png`;
+      link.href = els.canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    function exportSvg() {
+      const svg = buildSvg();
+      downloadBlob(`${safeName(state.title)}.svg`, svg, "image/svg+xml");
+    }
+
+    function buildSvg() {
+      const width = state.cols * state.cell + state.gutter * 2;
+      const height = state.rows * state.cell + 92;
+      const parts = [
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+        `<rect width="100%" height="100%" fill="#fffefa"/>`,
+        `<text x="${state.gutter}" y="30" font-family="Segoe UI, Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#24221f">${escapeXml(state.title)}</text>`,
+        `<text x="${width - state.gutter}" y="30" text-anchor="end" font-family="Segoe UI, Microsoft YaHei, Arial" font-size="12" fill="#6d6860">${state.cols} x ${state.rows}</text>`
+      ];
+      const left = state.gutter;
+      const top = 58;
+      for (let c = 0; c <= state.cols; c++) {
+        const x = left + c * state.cell;
+        parts.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${top + state.rows * state.cell}" stroke="#ded7ce"/>`);
+      }
+      for (let r = 0; r <= state.rows; r++) {
+        const y = top + r * state.cell;
+        parts.push(`<line x1="${left}" y1="${y}" x2="${left + state.cols * state.cell}" y2="${y}" stroke="#ded7ce"/>`);
+      }
+      parts.push(`<rect x="${left}" y="${top}" width="${state.cols * state.cell}" height="${state.rows * state.cell}" fill="none" stroke="#7f756a" stroke-width="1.5"/>`);
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.grid[r][c];
+          if (cell.stitch === "empty") continue;
+          const x = left + c * state.cell + state.cell / 2 - 16;
+          const y = top + r * state.cell + state.cell / 2 - 16;
+          parts.push(`<g transform="translate(${x} ${y}) scale(${state.cell * .66 / 32})">${symbolSvg(cell.stitch, escapeXml(cell.color)).replace("<svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">", "").replace("</svg>", "")}</g>`);
+        }
+      }
+      parts.push("</svg>");
+      return parts.join("");
+    }
+
+    function downloadBlob(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = url;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function flashStatus(text) {
+      els.status.textContent = text;
+      setTimeout(updateStatus, 1200);
+    }
+
+    function hasContent() {
+      return state.grid.some(row => row.some(cell => cell.stitch !== "empty"));
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
+    }
+
+    function safeName(name) {
+      return (name || "crochet-chart").replace(/[\\/:*?"<>|]+/g, "-").trim() || "crochet-chart";
+    }
+
+    function normalizeColor(value) {
+      if (typeof value !== "string") return "#24221f";
+      if (/^#[0-9a-f]{6}$/i.test(value)) return value;
+      if (/^#[0-9a-f]{3}$/i.test(value)) {
+        return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`;
+      }
+      return "#24221f";
+    }
+
+    function sameColor(a, b) {
+      return normalizeColor(a).toLowerCase() === normalizeColor(b).toLowerCase();
+    }
+
+    function escapeXml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    init();
+  </script>
+</body>
+</html>
