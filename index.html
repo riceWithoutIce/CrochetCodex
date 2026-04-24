@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="assets/icon.png">
   <link rel="apple-touch-icon" href="assets/icon.png">
-  <title>钩针图案绘制器</title>
+  <title>钩针图案绘制器 / Crochet Chart Designer</title>
   <style>
     :root {
       color-scheme: light;
@@ -197,7 +197,10 @@
     .tool span {
       color: var(--muted);
       font-size: 11px;
-      white-space: nowrap;
+      line-height: 1.2;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      text-align: center;
     }
 
     .tool.active {
@@ -233,7 +236,10 @@
     .preset-tool span {
       color: var(--muted);
       font-size: 11px;
-      white-space: nowrap;
+      line-height: 1.2;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      text-align: center;
     }
 
     .preset-tool.active {
@@ -267,6 +273,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
       gap: 10px;
       min-height: 62px;
       padding: 11px 14px;
@@ -464,60 +471,60 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <img class="brand-mark" src="assets/icon.png" alt="钩针图案绘制器图标">
+        <img class="brand-mark" src="assets/icon.png" alt="钩针图案绘制器图标 / Crochet Chart Designer icon">
         <div>
-          <h1>钩针图案绘制器</h1>
-          <p>符号图、配色、图例一屏完成</p>
+          <h1>钩针图案绘制器 / Crochet Chart Designer</h1>
+          <p>符号图、配色、图例一屏完成 / Symbols, colors, and legend in one workspace</p>
         </div>
       </div>
 
       <section class="section">
-        <div class="section-title">画布</div>
+        <div class="section-title">画布 / Canvas</div>
         <div class="field-grid">
-          <label>列数
+          <label>列数 / Columns
             <input id="colsInput" type="number" min="4" max="80" value="24">
           </label>
-          <label>行数
+          <label>行数 / Rows
             <input id="rowsInput" type="number" min="4" max="80" value="18">
           </label>
-          <label>格子大小
+          <label>格子大小 / Cell size
             <input id="cellInput" type="number" min="22" max="54" value="34">
           </label>
-          <label>编号方向
+          <label>编号方向 / Number side
             <select id="numberMode">
-              <option value="both">左右交替</option>
-              <option value="right">右侧</option>
-              <option value="left">左侧</option>
-              <option value="none">隐藏</option>
+              <option value="both">左右交替 / Alternate</option>
+              <option value="right">右侧 / Right</option>
+              <option value="left">左侧 / Left</option>
+              <option value="none">隐藏 / Hidden</option>
             </select>
           </label>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-title">针法</div>
+        <div class="section-title">针法 / Stitches</div>
         <div class="tools" id="toolPalette"></div>
       </section>
 
       <section class="section">
-        <div class="section-title">Shape</div>
+        <div class="section-title">形状 / Shape</div>
         <div class="preset-tools" id="presetPalette"></div>
         <div style="height:10px"></div>
         <div class="field-grid">
-          <label>W
+          <label>宽 / W
             <input id="presetColsInput" type="number" min="1" max="21" value="7">
           </label>
-          <label>H
+          <label>高 / H
             <input id="presetRowsInput" type="number" min="1" max="21" value="7">
           </label>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-title">颜色</div>
+        <div class="section-title">颜色 / Colors</div>
         <div class="swatches" id="swatches"></div>
         <div style="height:10px"></div>
-        <label>自定义线色
+        <label>自定义线色 / Custom yarn color
           <input id="customColor" type="color" value="#2f7d78">
         </label>
       </section>
@@ -526,103 +533,103 @@
     <main class="main">
       <div class="toolbar">
         <div class="toolbar-group">
-          <button class="icon-btn" id="undoBtn" title="撤销" aria-label="撤销">
+          <button class="icon-btn" id="undoBtn" title="撤销 / Undo" aria-label="撤销 / Undo">
             <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-1"/></svg>
           </button>
-          <button class="icon-btn" id="redoBtn" title="重做" aria-label="重做">
+          <button class="icon-btn" id="redoBtn" title="重做 / Redo" aria-label="重做 / Redo">
             <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h1"/></svg>
           </button>
-          <button class="icon-btn" id="mirrorBtn" title="水平镜像" aria-label="水平镜像">
+          <button class="icon-btn" id="mirrorBtn" title="水平镜像 / Mirror horizontally" aria-label="水平镜像 / Mirror horizontally">
             <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="m7 7-4 5 4 5V7Z"/><path d="m17 7 4 5-4 5V7Z"/></svg>
           </button>
-          <button class="icon-btn" id="panBtn" title="拖动画布" aria-label="拖动画布">
+          <button class="icon-btn" id="panBtn" title="拖动画布 / Pan canvas" aria-label="拖动画布 / Pan canvas">
             <svg viewBox="0 0 24 24"><path d="M7 11V7a2 2 0 1 1 4 0v4"/><path d="M11 10V6a2 2 0 1 1 4 0v5"/><path d="M15 11V8a2 2 0 1 1 4 0v7a6 6 0 0 1-6 6h-2a7 7 0 0 1-5.7-3L3 15a2 2 0 0 1 3.2-2.4L8 15"/><path d="M7 11v4"/></svg>
           </button>
-          <button class="icon-btn" id="clearBtn" title="清空画布" aria-label="清空画布">
+          <button class="icon-btn" id="clearBtn" title="清空画布 / Clear canvas" aria-label="清空画布 / Clear canvas">
             <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
           </button>
         </div>
         <div class="toolbar-group">
-          <button class="icon-btn" id="zoomOutBtn" title="缩小" aria-label="缩小">
+          <button class="icon-btn" id="zoomOutBtn" title="缩小 / Zoom out" aria-label="缩小 / Zoom out">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="m16 16 5 5"/></svg>
           </button>
           <div class="zoom-pill" id="zoomLabel">100%</div>
-          <button class="icon-btn" id="zoomInBtn" title="放大" aria-label="放大">
+          <button class="icon-btn" id="zoomInBtn" title="放大 / Zoom in" aria-label="放大 / Zoom in">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="M11 8v6"/><path d="m16 16 5 5"/></svg>
           </button>
         </div>
         <div class="toolbar-group">
-          <button id="saveBtn" class="button-primary">保存</button>
-          <button id="exportPngBtn">PNG</button>
-          <button id="exportSvgBtn">SVG</button>
+          <button id="saveBtn" class="button-primary">保存 / Save</button>
+          <button id="exportPngBtn">导出 PNG / Export PNG</button>
+          <button id="exportSvgBtn">导出 SVG / Export SVG</button>
         </div>
       </div>
       <div class="stage-wrap" id="stageWrap">
         <div class="stage" id="stage">
           <canvas id="chart" width="980" height="720"></canvas>
-          <div class="status" id="status">准备绘制</div>
+          <div class="status" id="status">准备绘制 / Ready to draw</div>
         </div>
       </div>
     </main>
 
     <aside class="inspector">
       <section class="section">
-        <div class="section-title">作品</div>
-        <label>名称
-          <input id="titleInput" type="text" value="我的钩针图案">
+        <div class="section-title">作品 / Project</div>
+        <label>名称 / Name
+          <input id="titleInput" type="text" value="我的钩针图案 / My Crochet Chart">
         </label>
       </section>
 
       <section class="section">
-        <div class="section-title">图例</div>
+        <div class="section-title">图例 / Legend</div>
         <div class="legend" id="legend"></div>
       </section>
 
       <section class="section">
-        <div class="section-title">文件</div>
+        <div class="section-title">文件 / Files</div>
         <div class="actions">
-          <button id="exportJsonBtn">导出 JSON</button>
-          <button id="importJsonBtn">导入 JSON</button>
+          <button id="exportJsonBtn">导出 JSON / Export JSON</button>
+          <button id="importJsonBtn">导入 JSON / Import JSON</button>
           <input id="fileInput" class="hidden-file" type="file" accept="application/json,.json">
         </div>
       </section>
 
       <section class="section">
-        <div class="section-title">Reference</div>
+        <div class="section-title">参考图 / Reference</div>
         <div class="actions two">
-          <button id="uploadBgBtn">Upload image</button>
-          <button id="clearBgBtn">Clear</button>
+          <button id="uploadBgBtn">上传图片 / Upload image</button>
+          <button id="clearBgBtn">清除 / Clear</button>
         </div>
         <input id="bgFileInput" class="hidden-file" type="file" accept="image/*">
         <div style="height:10px"></div>
         <div class="field-grid">
-          <label>Opacity
+          <label>透明度 / Opacity
             <input id="bgOpacityInput" type="number" min="0" max="100" value="35">
           </label>
-          <label>Scale
+          <label>缩放 / Scale
             <input id="bgScaleInput" type="number" min="10" max="300" value="100">
           </label>
-          <label>Offset X
+          <label>水平偏移 / Offset X
             <input id="bgOffsetXInput" type="number" min="-2000" max="2000" value="0">
           </label>
-          <label>Offset Y
+          <label>垂直偏移 / Offset Y
             <input id="bgOffsetYInput" type="number" min="-2000" max="2000" value="0">
           </label>
         </div>
         <div style="height:8px"></div>
-        <p class="note" id="bgInfoText">No reference image loaded.</p>
+        <p class="note" id="bgInfoText">未加载参考图 / No reference image loaded.</p>
       </section>
 
       <section class="section">
-        <div class="section-title">快速操作</div>
+        <div class="section-title">快速操作 / Quick actions</div>
         <div class="actions two">
-          <button id="fillRowBtn">填满当前行</button>
-          <button id="outlineBtn">边框标记</button>
+          <button id="fillRowBtn">填满当前行 / Fill current row</button>
+          <button id="outlineBtn">边框标记 / Mark border</button>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-title">状态</div>
+        <div class="section-title">状态 / Status</div>
         <p class="note" id="summaryText"></p>
       </section>
     </aside>
@@ -630,25 +637,25 @@
 
   <script>
     const stitches = [
-      { id: "empty", name: "空", abbr: "空", draw: "empty" },
-      { id: "ch", name: "锁针", abbr: "ch", draw: "chain" },
-      { id: "slst", name: "引拔针", abbr: "sl st", draw: "dot" },
-      { id: "sc", name: "短针", abbr: "sc", draw: "cross" },
-      { id: "hdc", name: "中长针", abbr: "hdc", draw: "halfDouble" },
-      { id: "dc", name: "长针", abbr: "dc", draw: "double" },
-      { id: "tr", name: "长长针", abbr: "tr", draw: "treble" },
-      { id: "inc", name: "加针", abbr: "inc", draw: "increase" },
-      { id: "dec", name: "减针", abbr: "dec", draw: "decrease" },
-      { id: "bobble", name: "枣形针", abbr: "bob", draw: "bobble" },
-      { id: "picot", name: "狗牙针", abbr: "picot", draw: "picot" },
-      { id: "erase", name: "橡皮", abbr: "擦", draw: "eraser" }
+      { id: "empty", name: "空", en: "Empty", abbr: "空", draw: "empty" },
+      { id: "ch", name: "锁针", en: "Chain", abbr: "ch", draw: "chain" },
+      { id: "slst", name: "引拔针", en: "Slip stitch", abbr: "sl st", draw: "dot" },
+      { id: "sc", name: "短针", en: "Single crochet", abbr: "sc", draw: "cross" },
+      { id: "hdc", name: "中长针", en: "Half double crochet", abbr: "hdc", draw: "halfDouble" },
+      { id: "dc", name: "长针", en: "Double crochet", abbr: "dc", draw: "double" },
+      { id: "tr", name: "长长针", en: "Treble crochet", abbr: "tr", draw: "treble" },
+      { id: "inc", name: "加针", en: "Increase", abbr: "inc", draw: "increase" },
+      { id: "dec", name: "减针", en: "Decrease", abbr: "dec", draw: "decrease" },
+      { id: "bobble", name: "枣形针", en: "Bobble", abbr: "bob", draw: "bobble" },
+      { id: "picot", name: "狗牙针", en: "Picot", abbr: "picot", draw: "picot" },
+      { id: "erase", name: "橡皮", en: "Eraser", abbr: "擦", draw: "eraser" }
     ];
 
     const shapePresets = [
-      { id: "single", name: "Single" },
-      { id: "rect", name: "Rect" },
-      { id: "circle", name: "Circle" },
-      { id: "star", name: "Star" }
+      { id: "single", name: "单点", en: "Single" },
+      { id: "rect", name: "矩形", en: "Rect" },
+      { id: "circle", name: "圆形", en: "Circle" },
+      { id: "star", name: "星形", en: "Star" }
     ];
 
     const swatchColors = ["#24221f", "#2f7d78", "#cf5f42", "#8f5b9a", "#d69b2d", "#5c7f45", "#4d76b9", "#b34d66", "#8b6b4f", "#6d6860", "#ffffff", "#f1d7c3"];
@@ -663,7 +670,7 @@
       presetCols: 7,
       presetRows: 7,
       color: "#2f7d78",
-      title: "我的钩针图案",
+      title: "我的钩针图案 / My Crochet Chart",
       numberMode: "both",
       hover: null,
       selected: null,
@@ -770,9 +777,9 @@
         const btn = document.createElement("button");
         btn.className = `tool${state.tool === stitch.id ? " active" : ""}`;
         btn.type = "button";
-        btn.title = stitch.name;
+        btn.title = dual(stitch.name, stitch.en);
         btn.dataset.tool = stitch.id;
-        btn.innerHTML = `${symbolSvg(stitch.id, stitch.id === "empty" ? "#b7aea2" : "#24221f")}<span>${stitch.abbr}</span>`;
+        btn.innerHTML = `${symbolSvg(stitch.id, stitch.id === "empty" ? "#b7aea2" : "#24221f")}<span>${stitchButtonLabel(stitch)}</span>`;
         btn.addEventListener("click", () => {
           state.tool = stitch.id;
           buildTools();
@@ -787,9 +794,9 @@
         const btn = document.createElement("button");
         btn.className = `preset-tool${state.preset === preset.id ? " active" : ""}`;
         btn.type = "button";
-        btn.title = preset.name;
+        btn.title = dual(preset.name, preset.en);
         btn.dataset.preset = preset.id;
-        btn.innerHTML = `${shapeSvg(preset.id)}<span>${preset.name}</span>`;
+        btn.innerHTML = `${shapeSvg(preset.id)}<span>${dual(preset.name, preset.en)}</span>`;
         btn.addEventListener("click", () => {
           state.preset = preset.id;
           buildPresets();
@@ -894,7 +901,7 @@
         });
       });
       els.titleInput.addEventListener("input", event => {
-        state.title = event.target.value.trim() || "未命名图案";
+        state.title = event.target.value.trim() || "未命名图案 / Untitled pattern";
         render();
       });
 
@@ -1436,7 +1443,7 @@
           offsetX: state.background.offsetX,
           offsetY: state.background.offsetY
         });
-        flashStatus("Reference image loaded");
+        flashStatus("参考图已加载 / Reference image loaded");
       };
       reader.readAsDataURL(file);
       event.target.value = "";
@@ -1490,13 +1497,13 @@
 
     function updateBackgroundInfo() {
       if (!state.background.src) {
-        els.bgInfoText.textContent = "No reference image loaded.";
+        els.bgInfoText.textContent = "未加载参考图 / No reference image loaded.";
         return;
       }
-      const name = state.background.name || "Embedded image";
+      const name = state.background.name || "嵌入图片 / Embedded image";
       const size = state.background.naturalWidth && state.background.naturalHeight
         ? `${state.background.naturalWidth} x ${state.background.naturalHeight}`
-        : "Loading...";
+        : "加载中 / Loading...";
       els.bgInfoText.textContent = `${name} · ${size}`;
     }
 
@@ -1510,24 +1517,26 @@
       els.legend.innerHTML = "";
       const used = stitches.filter(stitch => stitch.id !== "erase" && stitch.id !== "empty" && counts.has(stitch.id));
       if (!used.length) {
-        els.legend.innerHTML = `<p class="note">画布还没有针法符号。</p>`;
+        els.legend.innerHTML = `<p class="note">画布还没有针法符号 / No stitch symbols on the canvas yet.</p>`;
       } else {
         used.forEach(stitch => {
           const row = document.createElement("div");
           row.className = "legend-row";
-          row.innerHTML = `<div class="legend-icon">${symbolSvg(stitch.id, "#24221f")}</div><div class="legend-name">${stitch.name} / ${stitch.abbr}</div><div class="legend-count">${counts.get(stitch.id)}</div>`;
+          row.innerHTML = `<div class="legend-icon">${symbolSvg(stitch.id, "#24221f")}</div><div class="legend-name">${stitch.name} / ${stitch.en} / ${stitch.abbr}</div><div class="legend-count">${counts.get(stitch.id)}</div>`;
           els.legend.appendChild(row);
         });
       }
       const total = [...counts.values()].reduce((sum, value) => sum + value, 0);
-      els.summaryText.textContent = `${state.title}：${state.cols} 列 x ${state.rows} 行，已放置 ${total} 个针法符号。`;
+      els.summaryText.textContent = `${state.title}：${state.cols} 列 x ${state.rows} 行，已放置 ${total} 个针法符号 / ${state.cols} columns x ${state.rows} rows, ${total} stitch symbols placed.`;
     }
 
     function updateStatus() {
       const stitch = stitches.find(item => item.id === state.tool);
       const preset = shapePresets.find(item => item.id === state.preset);
-      const pos = state.hover ? `第 ${state.rows - state.hover.row} 行，第 ${state.hover.col + 1} 列` : "准备绘制";
-      els.status.textContent = `${pos} · ${stitch?.abbr || ""} · ${preset?.name || "Single"}`;
+      const pos = state.hover
+        ? `第 ${state.rows - state.hover.row} 行，第 ${state.hover.col + 1} 列 / Row ${state.rows - state.hover.row}, Column ${state.hover.col + 1}`
+        : "准备绘制 / Ready to draw";
+      els.status.textContent = `${pos} · ${stitch ? dual(stitch.name, stitch.en) : ""} · ${preset ? dual(preset.name, preset.en) : dual("单点", "Single")}`;
     }
 
     function shapeSvg(shapeId) {
@@ -1560,7 +1569,7 @@
 
     function saveProject() {
       localStorage.setItem("crochet-chart-project", JSON.stringify(projectData()));
-      flashStatus("已保存到浏览器");
+      flashStatus("已保存到浏览器 / Saved to browser");
     }
 
     function projectData() {
@@ -1586,7 +1595,7 @@
 
     function loadProject(data, recordUndo = true) {
       if (recordUndo && state.grid.length) pushUndo();
-      state.title = data.title || "我的钩针图案";
+      state.title = data.title || "我的钩针图案 / My Crochet Chart";
       state.rows = clamp(Number(data.rows || data.grid?.length || 18), 4, 80);
       state.cols = clamp(Number(data.cols || data.grid?.[0]?.length || 24), 4, 80);
       state.cell = clamp(Number(data.cell || 34), 22, 54);
@@ -1631,9 +1640,9 @@
       reader.onload = () => {
         try {
           loadProject(JSON.parse(reader.result), true);
-          flashStatus("JSON 已导入");
+          flashStatus("JSON 已导入 / JSON imported");
         } catch {
-          flashStatus("JSON 格式无法识别");
+          flashStatus("JSON 格式无法识别 / JSON format not recognized");
         }
       };
       reader.readAsText(file);
@@ -1710,6 +1719,15 @@
 
     function safeName(name) {
       return (name || "crochet-chart").replace(/[\\/:*?"<>|]+/g, "-").trim() || "crochet-chart";
+    }
+
+    function dual(zh, en) {
+      return `${zh} / ${en}`;
+    }
+
+    function stitchButtonLabel(stitch) {
+      if (stitch.id === "empty" || stitch.id === "erase") return dual(stitch.name, stitch.en);
+      return `${stitch.name} / ${stitch.abbr}`;
     }
 
     function normalizeColor(value) {
