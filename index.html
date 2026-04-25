@@ -301,6 +301,14 @@
       min-width: 118px;
     }
 
+    .language-picker-panel {
+      justify-content: space-between;
+    }
+
+    .language-picker-panel .language-select {
+      min-width: 132px;
+    }
+
     .icon-btn {
       width: 38px;
       padding: 7px;
@@ -575,14 +583,6 @@
           <button id="saveBtn" class="button-primary" data-i18n="save">保存</button>
           <button id="exportPngBtn" data-i18n="exportPng">导出 PNG</button>
           <button id="exportSvgBtn" data-i18n="exportSvg">导出 SVG</button>
-          <label class="language-picker"><span data-i18n="language">语言</span>
-            <select id="languageSelect" class="language-select">
-              <option value="zh-CN">简体中文</option>
-              <option value="zh-TW">繁體中文</option>
-              <option value="en">English</option>
-              <option value="ru">Русский</option>
-            </select>
-          </label>
         </div>
       </div>
       <div class="stage-wrap" id="stageWrap">
@@ -594,6 +594,12 @@
     </main>
 
     <aside class="inspector">
+      <section class="section language-section">
+        <label class="language-picker language-picker-panel"><span data-i18n="language">语言</span>
+          <select id="languageSelect" class="language-select"></select>
+        </label>
+      </section>
+
       <section class="section">
         <div class="section-title" data-i18n="project">作品</div>
         <label><span data-i18n="name">名称</span>
@@ -656,278 +662,39 @@
     </aside>
   </div>
 
+  <script src="config/i18n.js"></script>
   <script>
-    const languages = ["zh-CN", "zh-TW", "en", "ru"];
-    const translations = {
-      "zh-CN": {
-        appTitle: "钩针图案绘制器",
-        appIconAlt: "钩针图案绘制器图标",
-        tagline: "符号图、配色、图例一屏完成",
-        canvas: "画布",
-        columns: "列数",
-        rows: "行数",
-        cellSize: "格子大小",
-        numberSide: "编号方向",
-        numberBoth: "左右交替",
-        numberRight: "右侧",
-        numberLeft: "左侧",
-        numberNone: "隐藏",
-        stitches: "针法",
-        shape: "形状",
-        width: "宽",
-        height: "高",
-        colors: "颜色",
-        customYarnColor: "自定义线色",
-        undo: "撤销",
-        redo: "重做",
-        mirror: "水平镜像",
-        panCanvas: "拖动画布",
-        clearCanvas: "清空画布",
-        zoomOut: "缩小",
-        zoomIn: "放大",
-        save: "保存",
-        exportPng: "导出 PNG",
-        exportSvg: "导出 SVG",
-        language: "语言",
-        ready: "准备绘制",
-        project: "作品",
-        name: "名称",
-        legend: "图例",
-        files: "文件",
-        exportJson: "导出 JSON",
-        importJson: "导入 JSON",
-        reference: "参考图",
-        uploadImage: "上传图片",
-        clear: "清除",
-        opacity: "透明度",
-        scale: "缩放",
-        offsetX: "水平偏移",
-        offsetY: "垂直偏移",
-        quickActions: "快速操作",
-        fillCurrentRow: "填满当前行",
-        markBorder: "边框标记",
-        status: "状态",
-        defaultTitle: "我的钩针图案",
-        untitledPattern: "未命名图案",
-        noReferenceImage: "未加载参考图",
-        embeddedImage: "嵌入图片",
-        loading: "加载中",
-        noStitches: "画布还没有针法符号。",
-        referenceLoaded: "参考图已加载",
-        savedToBrowser: "已保存到浏览器",
-        jsonImported: "JSON 已导入",
-        jsonInvalid: "JSON 格式无法识别",
-        position: (row, col) => `第 ${row} 行，第 ${col} 列`,
-        summary: (title, cols, rows, total) => `${title}：${cols} 列 x ${rows} 行，已放置 ${total} 个针法符号。`
-      },
-      "zh-TW": {
-        appTitle: "鉤針圖案繪製器",
-        appIconAlt: "鉤針圖案繪製器圖示",
-        tagline: "符號圖、配色、圖例一屏完成",
-        canvas: "畫布",
-        columns: "欄數",
-        rows: "列數",
-        cellSize: "格子大小",
-        numberSide: "編號方向",
-        numberBoth: "左右交替",
-        numberRight: "右側",
-        numberLeft: "左側",
-        numberNone: "隱藏",
-        stitches: "針法",
-        shape: "形狀",
-        width: "寬",
-        height: "高",
-        colors: "顏色",
-        customYarnColor: "自訂線色",
-        undo: "復原",
-        redo: "重做",
-        mirror: "水平鏡像",
-        panCanvas: "拖動畫布",
-        clearCanvas: "清空畫布",
-        zoomOut: "縮小",
-        zoomIn: "放大",
-        save: "儲存",
-        exportPng: "匯出 PNG",
-        exportSvg: "匯出 SVG",
-        language: "語言",
-        ready: "準備繪製",
-        project: "作品",
-        name: "名稱",
-        legend: "圖例",
-        files: "檔案",
-        exportJson: "匯出 JSON",
-        importJson: "匯入 JSON",
-        reference: "參考圖",
-        uploadImage: "上傳圖片",
-        clear: "清除",
-        opacity: "透明度",
-        scale: "縮放",
-        offsetX: "水平偏移",
-        offsetY: "垂直偏移",
-        quickActions: "快速操作",
-        fillCurrentRow: "填滿目前列",
-        markBorder: "邊框標記",
-        status: "狀態",
-        defaultTitle: "我的鉤針圖案",
-        untitledPattern: "未命名圖案",
-        noReferenceImage: "未載入參考圖",
-        embeddedImage: "嵌入圖片",
-        loading: "載入中",
-        noStitches: "畫布還沒有針法符號。",
-        referenceLoaded: "參考圖已載入",
-        savedToBrowser: "已儲存到瀏覽器",
-        jsonImported: "JSON 已匯入",
-        jsonInvalid: "JSON 格式無法辨識",
-        position: (row, col) => `第 ${row} 列，第 ${col} 欄`,
-        summary: (title, cols, rows, total) => `${title}：${cols} 欄 x ${rows} 列，已放置 ${total} 個針法符號。`
-      },
-      en: {
-        appTitle: "Crochet Chart Designer",
-        appIconAlt: "Crochet Chart Designer icon",
-        tagline: "Symbols, colors, and legend in one workspace",
-        canvas: "Canvas",
-        columns: "Columns",
-        rows: "Rows",
-        cellSize: "Cell size",
-        numberSide: "Number side",
-        numberBoth: "Alternate",
-        numberRight: "Right",
-        numberLeft: "Left",
-        numberNone: "Hidden",
-        stitches: "Stitches",
-        shape: "Shape",
-        width: "Width",
-        height: "Height",
-        colors: "Colors",
-        customYarnColor: "Custom yarn color",
-        undo: "Undo",
-        redo: "Redo",
-        mirror: "Mirror horizontally",
-        panCanvas: "Pan canvas",
-        clearCanvas: "Clear canvas",
-        zoomOut: "Zoom out",
-        zoomIn: "Zoom in",
-        save: "Save",
-        exportPng: "Export PNG",
-        exportSvg: "Export SVG",
-        language: "Language",
-        ready: "Ready to draw",
-        project: "Project",
-        name: "Name",
-        legend: "Legend",
-        files: "Files",
-        exportJson: "Export JSON",
-        importJson: "Import JSON",
-        reference: "Reference",
-        uploadImage: "Upload image",
-        clear: "Clear",
-        opacity: "Opacity",
-        scale: "Scale",
-        offsetX: "Offset X",
-        offsetY: "Offset Y",
-        quickActions: "Quick actions",
-        fillCurrentRow: "Fill current row",
-        markBorder: "Mark border",
-        status: "Status",
-        defaultTitle: "My Crochet Chart",
-        untitledPattern: "Untitled pattern",
-        noReferenceImage: "No reference image loaded.",
-        embeddedImage: "Embedded image",
-        loading: "Loading...",
-        noStitches: "No stitch symbols on the canvas yet.",
-        referenceLoaded: "Reference image loaded",
-        savedToBrowser: "Saved to browser",
-        jsonImported: "JSON imported",
-        jsonInvalid: "JSON format not recognized",
-        position: (row, col) => `Row ${row}, Column ${col}`,
-        summary: (title, cols, rows, total) => `${title}: ${cols} columns x ${rows} rows, ${total} stitch symbols placed.`
-      },
-      ru: {
-        appTitle: "Редактор схем вязания крючком",
-        appIconAlt: "Значок редактора схем вязания крючком",
-        tagline: "Символы, цвета и легенда в одном рабочем окне",
-        canvas: "Холст",
-        columns: "Столбцы",
-        rows: "Ряды",
-        cellSize: "Размер клетки",
-        numberSide: "Сторона номеров",
-        numberBoth: "Поочередно",
-        numberRight: "Справа",
-        numberLeft: "Слева",
-        numberNone: "Скрыть",
-        stitches: "Петли",
-        shape: "Форма",
-        width: "Ширина",
-        height: "Высота",
-        colors: "Цвета",
-        customYarnColor: "Свой цвет пряжи",
-        undo: "Отменить",
-        redo: "Повторить",
-        mirror: "Отразить по горизонтали",
-        panCanvas: "Перемещать холст",
-        clearCanvas: "Очистить холст",
-        zoomOut: "Уменьшить",
-        zoomIn: "Увеличить",
-        save: "Сохранить",
-        exportPng: "Экспорт PNG",
-        exportSvg: "Экспорт SVG",
-        language: "Язык",
-        ready: "Готово к рисованию",
-        project: "Проект",
-        name: "Название",
-        legend: "Легенда",
-        files: "Файлы",
-        exportJson: "Экспорт JSON",
-        importJson: "Импорт JSON",
-        reference: "Референс",
-        uploadImage: "Загрузить изображение",
-        clear: "Очистить",
-        opacity: "Прозрачность",
-        scale: "Масштаб",
-        offsetX: "Смещение X",
-        offsetY: "Смещение Y",
-        quickActions: "Быстрые действия",
-        fillCurrentRow: "Заполнить текущий ряд",
-        markBorder: "Отметить рамку",
-        status: "Статус",
-        defaultTitle: "Моя схема крючком",
-        untitledPattern: "Безымянная схема",
-        noReferenceImage: "Референс не загружен.",
-        embeddedImage: "Встроенное изображение",
-        loading: "Загрузка...",
-        noStitches: "На холсте пока нет символов петель.",
-        referenceLoaded: "Референс загружен",
-        savedToBrowser: "Сохранено в браузере",
-        jsonImported: "JSON импортирован",
-        jsonInvalid: "Формат JSON не распознан",
-        position: (row, col) => `Ряд ${row}, столбец ${col}`,
-        summary: (title, cols, rows, total) => `${title}: ${cols} столбцов x ${rows} рядов, символов петель: ${total}.`
-      }
-    };
+    const i18nConfig = window.CrochetCodexI18n || {};
+    const supportedLanguages = i18nConfig.supportedLanguages || [{ code: "zh-CN", label: "简体中文" }];
+    const languages = supportedLanguages.map(language => language.code);
+    const translations = i18nConfig.translations || {};
+    const stitchLabels = i18nConfig.stitches || {};
+    const shapeLabels = i18nConfig.shapes || {};
 
     const stitches = [
-      { id: "empty", labels: { "zh-CN": "空", "zh-TW": "空", en: "Empty", ru: "Пусто" }, abbr: "empty", draw: "empty" },
-      { id: "ch", labels: { "zh-CN": "锁针", "zh-TW": "鎖針", en: "Chain", ru: "Воздушная петля" }, abbr: "ch", draw: "chain" },
-      { id: "slst", labels: { "zh-CN": "引拔针", "zh-TW": "引拔針", en: "Slip stitch", ru: "Соединительный столбик" }, abbr: "sl st", draw: "dot" },
-      { id: "sc", labels: { "zh-CN": "短针", "zh-TW": "短針", en: "Single crochet", ru: "Столбик без накида" }, abbr: "sc", draw: "cross" },
-      { id: "hdc", labels: { "zh-CN": "中长针", "zh-TW": "中長針", en: "Half double crochet", ru: "Полустолбик с накидом" }, abbr: "hdc", draw: "halfDouble" },
-      { id: "dc", labels: { "zh-CN": "长针", "zh-TW": "長針", en: "Double crochet", ru: "Столбик с накидом" }, abbr: "dc", draw: "double" },
-      { id: "tr", labels: { "zh-CN": "长长针", "zh-TW": "長長針", en: "Treble crochet", ru: "Столбик с двумя накидами" }, abbr: "tr", draw: "treble" },
-      { id: "inc", labels: { "zh-CN": "加针", "zh-TW": "加針", en: "Increase", ru: "Прибавка" }, abbr: "inc", draw: "increase" },
-      { id: "dec", labels: { "zh-CN": "减针", "zh-TW": "減針", en: "Decrease", ru: "Убавка" }, abbr: "dec", draw: "decrease" },
-      { id: "bobble", labels: { "zh-CN": "枣形针", "zh-TW": "棗形針", en: "Bobble", ru: "Шишечка" }, abbr: "bob", draw: "bobble" },
-      { id: "picot", labels: { "zh-CN": "狗牙针", "zh-TW": "狗牙針", en: "Picot", ru: "Пико" }, abbr: "picot", draw: "picot" },
-      { id: "erase", labels: { "zh-CN": "橡皮", "zh-TW": "橡皮", en: "Eraser", ru: "Ластик" }, abbr: "erase", draw: "eraser" }
+      { id: "empty", labels: stitchLabels.empty || {}, abbr: "empty", draw: "empty" },
+      { id: "ch", labels: stitchLabels.ch || {}, abbr: "ch", draw: "chain" },
+      { id: "slst", labels: stitchLabels.slst || {}, abbr: "sl st", draw: "dot" },
+      { id: "sc", labels: stitchLabels.sc || {}, abbr: "sc", draw: "cross" },
+      { id: "hdc", labels: stitchLabels.hdc || {}, abbr: "hdc", draw: "halfDouble" },
+      { id: "dc", labels: stitchLabels.dc || {}, abbr: "dc", draw: "double" },
+      { id: "tr", labels: stitchLabels.tr || {}, abbr: "tr", draw: "treble" },
+      { id: "inc", labels: stitchLabels.inc || {}, abbr: "inc", draw: "increase" },
+      { id: "dec", labels: stitchLabels.dec || {}, abbr: "dec", draw: "decrease" },
+      { id: "bobble", labels: stitchLabels.bobble || {}, abbr: "bob", draw: "bobble" },
+      { id: "picot", labels: stitchLabels.picot || {}, abbr: "picot", draw: "picot" },
+      { id: "erase", labels: stitchLabels.erase || {}, abbr: "erase", draw: "eraser" }
     ];
 
     const shapePresets = [
-      { id: "single", labels: { "zh-CN": "单点", "zh-TW": "單點", en: "Single", ru: "Одиночная" } },
-      { id: "rect", labels: { "zh-CN": "矩形", "zh-TW": "矩形", en: "Rect", ru: "Прямоугольник" } },
-      { id: "circle", labels: { "zh-CN": "圆形", "zh-TW": "圓形", en: "Circle", ru: "Круг" } },
-      { id: "star", labels: { "zh-CN": "星形", "zh-TW": "星形", en: "Star", ru: "Звезда" } }
+      { id: "single", labels: shapeLabels.single || {} },
+      { id: "rect", labels: shapeLabels.rect || {} },
+      { id: "circle", labels: shapeLabels.circle || {} },
+      { id: "star", labels: shapeLabels.star || {} }
     ];
 
     const swatchColors = ["#24221f", "#2f7d78", "#cf5f42", "#8f5b9a", "#d69b2d", "#5c7f45", "#4d76b9", "#b34d66", "#8b6b4f", "#6d6860", "#ffffff", "#f1d7c3"];
+    const defaultLanguage = initialLanguage();
     const state = {
       rows: 18,
       cols: 24,
@@ -939,8 +706,8 @@
       presetCols: 7,
       presetRows: 7,
       color: "#2f7d78",
-      title: translations[initialLanguage()].defaultTitle,
-      language: initialLanguage(),
+      title: translations[defaultLanguage].defaultTitle,
+      language: defaultLanguage,
       numberMode: "both",
       hover: null,
       selected: null,
@@ -1008,6 +775,7 @@
     }
 
     function init() {
+      buildLanguageOptions();
       applyLanguage();
       const stored = localStorage.getItem("crochet-chart-project");
       if (stored) {
@@ -1050,6 +818,7 @@
         btn.className = `tool${state.tool === stitch.id ? " active" : ""}`;
         btn.type = "button";
         btn.title = termLabel(stitch);
+        btn.setAttribute("aria-label", stitchButtonLabel(stitch));
         btn.dataset.tool = stitch.id;
         btn.innerHTML = `${symbolSvg(stitch.id, stitch.id === "empty" ? "#b7aea2" : "#24221f")}<span>${stitchButtonLabel(stitch)}</span>`;
         btn.addEventListener("click", () => {
@@ -1067,6 +836,7 @@
         btn.className = `preset-tool${state.preset === preset.id ? " active" : ""}`;
         btn.type = "button";
         btn.title = localizedLabel(preset);
+        btn.setAttribute("aria-label", localizedLabel(preset));
         btn.dataset.preset = preset.id;
         btn.innerHTML = `${shapeSvg(preset.id)}<span>${localizedLabel(preset)}</span>`;
         btn.addEventListener("click", () => {
@@ -1085,6 +855,7 @@
         btn.className = `swatch${sameColor(state.color, color) ? " active" : ""}`;
         btn.type = "button";
         btn.title = color;
+        btn.setAttribute("aria-label", `${translate("customYarnColor")} ${color}`);
         btn.style.background = color;
         btn.addEventListener("click", () => {
           state.color = color;
@@ -1997,11 +1768,27 @@
     function initialLanguage() {
       const stored = localStorage.getItem("crochet-ui-language");
       if (languages.includes(stored)) return stored;
-      const browserLanguage = navigator.language || "";
-      if (browserLanguage.startsWith("zh-TW") || browserLanguage.startsWith("zh-HK") || browserLanguage.startsWith("zh-MO")) return "zh-TW";
-      if (browserLanguage.startsWith("zh")) return "zh-CN";
-      if (browserLanguage.startsWith("ru")) return "ru";
+      const storedMatch = matchSupportedLanguage(stored);
+      if (storedMatch) return storedMatch;
+      const preferredLanguages = Array.isArray(navigator.languages) && navigator.languages.length
+        ? navigator.languages
+        : [navigator.language || ""];
+      for (const language of preferredLanguages) {
+        const match = matchSupportedLanguage(language);
+        if (match) return match;
+      }
       return "zh-CN";
+    }
+
+    function matchSupportedLanguage(language) {
+      const normalized = String(language || "").toLowerCase();
+      if (!normalized) return "";
+      const exact = supportedLanguages.find(item => item.code.toLowerCase() === normalized);
+      if (exact) return exact.code;
+      if (normalized.startsWith("zh-hant") || normalized.startsWith("zh-tw") || normalized.startsWith("zh-hk") || normalized.startsWith("zh-mo")) return "zh-TW";
+      if (normalized.startsWith("zh")) return "zh-CN";
+      const base = normalized.split("-")[0];
+      return languages.includes(base) ? base : "";
     }
 
     function translate(key) {
@@ -2012,6 +1799,7 @@
       document.documentElement.lang = state.language;
       document.title = translate("appTitle");
       els.languageSelect.value = state.language;
+      els.languageSelect.setAttribute("aria-label", translate("language"));
       document.querySelectorAll("[data-i18n]").forEach(element => {
         element.textContent = translate(element.dataset.i18n);
       });
@@ -2024,6 +1812,17 @@
         element.alt = translate(element.dataset.i18nAlt);
       });
       updateBackgroundInfo();
+    }
+
+    function buildLanguageOptions() {
+      els.languageSelect.innerHTML = "";
+      supportedLanguages.forEach(language => {
+        const option = document.createElement("option");
+        option.value = language.code;
+        option.lang = language.code;
+        option.textContent = language.label;
+        els.languageSelect.appendChild(option);
+      });
     }
 
     function setLanguage(language) {
@@ -2045,9 +1844,7 @@
     }
 
     function termLabel(item) {
-      const current = localizedLabel(item);
-      const english = item.labels.en;
-      return state.language === "en" || current === english ? english : `${current} / ${english}`;
+      return localizedLabel(item);
     }
 
     function isDefaultTitle(value) {
