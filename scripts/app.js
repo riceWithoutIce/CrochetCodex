@@ -120,7 +120,6 @@ function init() {
     }
   } else {
     state.grid = blankGrid(state.rows, state.cols);
-    seedSample();
   }
   buildTools();
   buildPresets();
@@ -128,21 +127,6 @@ function init() {
   bindEvents();
   updateInputs();
   render();
-}
-
-function seedSample() {
-  const mid = Math.floor(state.cols / 2);
-  for (let r = 2; r < Math.min(state.rows, 12); r++) {
-    const width = Math.min(r + 2, 12);
-    for (let c = mid - Math.floor(width / 2); c <= mid + Math.floor(width / 2); c++) {
-      if (state.grid[r] && state.grid[r][c]) {
-        state.grid[r][c] = {
-          stitch: r % 3 === 0 ? "dc" : r % 3 === 1 ? "sc" : "ch",
-          color: r % 2 ? "#2f7d78" : "#cf5f42"
-        };
-      }
-    }
-  }
 }
 
 function buildTools() {
